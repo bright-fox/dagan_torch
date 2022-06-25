@@ -178,7 +178,7 @@ class DaganTrainer:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
             return [
-                self.display_transform(data_loader.dataset.x1_examples[idx])
+                self.display_transform(data_loader.dataset.originals[idx])
                 for idx in torch.randint(0, len(data_loader.dataset), (n,))
             ]
 

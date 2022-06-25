@@ -10,7 +10,11 @@ def get_dagan_args():
         "dataset_path",
         type=str,
         help="Filepath for dataset on which to train dagan. File should be .npy format with shape "
-        "(num_classes, samples_per_class, height, width, channels).",
+        "{"
+        "orig: (samples, height, width, channels)"
+        "aug: (samples, height, width, channels)"
+        "}"
+        ,
     )
     parser.add_argument(
         "final_model_path", type=str, help="Filepath to save final dagan model."
