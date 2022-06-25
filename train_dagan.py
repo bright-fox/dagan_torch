@@ -84,7 +84,7 @@ trainer = DaganTrainer(
     display_transform=display_transform,
     should_display_generations=should_display_generations,
 )
-trainer.train(data_loader=train_dataloader, epochs=epochs, val_images=val_data)
+trainer.train(data_loader=train_dataloader, epochs=epochs, val_images=val_data['orig'])
 
 # Save final generator model
 torch.save(trainer.g, final_generator_path)
