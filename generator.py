@@ -200,7 +200,7 @@ class Generator(nn.Module):
 
         # Encoders
         self.encode0 = _conv2d(
-            in_channels=1, out_channels=self.layer_sizes[0], kernel_size=3, stride=2
+            in_channels=3, out_channels=self.layer_sizes[0], kernel_size=3, stride=2
         )
         for i in range(1, self.U_depth):
             self.add_module(
