@@ -8,13 +8,15 @@ class Visualizer():
         if self.use_wandb:
             self.wandb_run = wandb.init(project='DAGAN', name=args.name, config=args) if not wandb.run else wandb.run
             self.val_images_table = wandb.Table(columns=['Epoch', 'Original', 'Real Augmentation', 'Generated Augmentation'])
+            self.val_images_artifact = wandb.Artifact(f'val_tables_{self.wandb_run.id}', type='generated val images')
 
     def log_generations(self, epoch, original_img, real_augmented_img, generated_augmented_img):
         if not self.use_wandb:
             pass
 
         self.val_images_table.add_data(epoch, wandb.Image(original_img), wandb.Image(real_augmented_img), wandb.Image(generated_augmented_img * 255))
-        self.wandb_run.log({'Generated images on validation set': self.val_images_table})
+        self.val_images_artifact.add(self.val_images_table, 'generated val images')
+        self.wandb_run.log_artifact(self.val_images_artifact)
 
     def log_losses(self, losses):
         # print losses to console
