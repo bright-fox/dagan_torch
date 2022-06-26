@@ -14,7 +14,7 @@ class Visualizer():
             pass
 
         self.val_images_table.add_data(epoch, wandb.Image(original_img), wandb.Image(real_augmented_img), wandb.Image(generated_augmented_img * 255))
-        self.wandb_run.log({'Generated images on validation set': self.table})
+        self.wandb_run.log({'Generated images on validation set': self.val_images_table})
 
     def log_losses(self, losses):
         # print losses to console
