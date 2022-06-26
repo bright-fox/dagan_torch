@@ -244,7 +244,7 @@ class DaganTrainer:
         self.g.eval()
         with torch.no_grad():
             generated_val_img = self.sample_generator(
-                self.display_transform(val_img['original'])[None, :]
+                self.display_transform(val_img['original'])[None, :].to(self.device)
             )
         self.g.train()
 
