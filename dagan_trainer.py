@@ -164,7 +164,7 @@ class DaganTrainer:
             print(f"Elapsed time: {(time.time() - start_time) / 60:.2f} minutes\n")
 
             # train the epoch
-            self._train_epoch(data_loader, val_dataloader)
+            self._train_epoch(data_loader)
             # log the generations
             self.log_curr_generated_imgs(val_dataloader)
 
