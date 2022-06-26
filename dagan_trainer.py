@@ -234,6 +234,7 @@ class DaganTrainer:
 
     def log_losses(self):
         if self.num_steps % 100 == 0:
+            print(f'\n[INFO] Iteration {self.num_steps}\n:')
             self.visualizer.log_losses(self.losses)
 
 
