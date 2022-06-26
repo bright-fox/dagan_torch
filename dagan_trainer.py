@@ -136,7 +136,6 @@ class DaganTrainer:
                 self._generator_train_iteration(x1)
 
             self.log_losses()
-            break
 
     def train(self, data_loader, epochs, val_dataloader):
         # if self.tracking_images is None and self.num_tracking_images > 0:
