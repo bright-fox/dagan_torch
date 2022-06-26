@@ -136,6 +136,7 @@ class DaganTrainer:
                 self._generator_train_iteration(x1)
 
             self.log_losses()
+            break
 
 
     def train(self, data_loader, epochs, val_dataloader):
