@@ -208,6 +208,7 @@ class DaganTrainer:
         self.render_img(train_gen.reshape(-1, train_gen.shape[-1]))
 
     def print_progress(self, data_loader, val_images):
+        # set generator to eval mode
         self.g.eval()
         with torch.no_grad():
             if self.should_display_generations:
@@ -216,6 +217,7 @@ class DaganTrainer:
                 self.tracking_images_gens.append(
                     self.g(self.tracking_images, self.tracking_z).cpu()
                 )
+        # set generator back to training mode
         self.g.train()
         print("D: {}".format(self.losses["D"][-1]))
         print("Raw D: {}".format(self.losses["D"][-1] - self.losses["GP"][-1]))
