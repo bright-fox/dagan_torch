@@ -171,6 +171,9 @@ class DaganTrainer:
             self.epoch += 1
             # self._save_checkpoint()
 
+        # at the end log the generations in table to wandb (hotfix for wandb bug)
+        self.visualizer.log_generation()
+
     def sample_generator(self, input_images, z=None):
         if z is None:
             z = torch.randn((input_images.shape[0], self.g.z_dim)).to(self.device)
@@ -247,7 +250,7 @@ class DaganTrainer:
             )
         self.g.train()
 
-        self.visualizer.log_generations(
+        self.visualizer.add_generated_imgs_to_table(
             self.epoch,
             val_img['original'],
             val_img['augmentation'],
