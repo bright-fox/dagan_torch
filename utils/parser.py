@@ -34,20 +34,6 @@ def get_dagan_args():
         "Useful when model architecture expects specific input size. "
         "If not specified, uses img_size of data as passed.",
     )
-    # parser.add_argument(
-    #     "--num_training_classes",
-    #     nargs="?",
-    #     type=int,
-    #     default=1200,
-    #     help="Number of classes to use for training.",
-    # )
-    # parser.add_argument(
-    #     "--num_val_classes",
-    #     nargs="?",
-    #     type=int,
-    #     default=200,
-    #     help="Number of classes to use for validation.",
-    # )
     parser.add_argument(
         "--epochs",
         nargs="?",
@@ -86,6 +72,17 @@ def get_dagan_args():
         "--suppress_generations",
         action="store_true",
         help="If specified, does not show intermediate progress images.",
+    )
+    parser.add_argument(
+        "--name",
+        type=str,
+        default="dagan",
+        help="Name of the model, as well as the wandb run"
+    )
+    parser.add_argument(
+        "--use_wandb",
+        action='store_true',
+        help='use wandb'
     )
     return parser.parse_args()
 
