@@ -234,7 +234,7 @@ class DaganTrainer:
 
     def log_losses(self):
         if self.num_steps % 100 == 0:
-            self.visualizer.log_losses(self.losses())
+            self.visualizer.log_losses(self.losses)
 
 
     def log_curr_generated_imgs(self, val_dataloader):
