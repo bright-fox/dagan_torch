@@ -240,7 +240,7 @@ class DaganTrainer:
     def log_curr_generated_imgs(self, val_dataloader):
         val_img = self.sample_val_images(val_dataloader)
         self.g.eval()
-        with torch.no_grad:
+        with torch.no_grad():
             generated_val_img = self.sample_generator(self.display_transform(val_img['original'])).cpu()
         self.g.train()
 
