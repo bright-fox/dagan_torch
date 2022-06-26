@@ -245,7 +245,7 @@ class DaganTrainer:
         with torch.no_grad():
             generated_val_img = self.sample_generator(
                 self.display_transform(val_img['original'])[None, :]
-            ).cpu()
+            )
         self.g.train()
 
         self.visualizer.log_generations(
