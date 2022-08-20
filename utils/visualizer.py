@@ -1,21 +1,45 @@
 import wandb
+import numpy as np
 
 class Visualizer():
+    """
+    Visualizer is used to log information about the training.
+    - losses are logged in console and wandb
+    - evaluation images are logged in wandb
+    """
+
     def __init__(self, args):
         self.args = args
-        self.use_wandb = args.use_wandb
         self.current_epoch = 0
+        self.use_wandb = args.use_wandb
         if self.use_wandb:
             self.wandb_run = wandb.init(project='DAGAN', name=args.name, config=args) if not wandb.run else wandb.run
             self.val_images_table = wandb.Table(columns=['Epoch', 'Original', 'Real Augmentation', 'Generated Augmentation'])
 
     def add_generated_imgs_to_table(self, epoch, original_img, real_augmented_img, generated_augmented_img):
+        """
+        Add the images into a wandb table
+        """
+
         if not self.use_wandb:
             pass
 
-        self.val_images_table.add_data(epoch, wandb.Image(original_img), wandb.Image(real_augmented_img), wandb.Image(generated_augmented_img * 255))
+        # transform the original and real augmentation image of
+        # shape (channel, height, width) to be digested by wandb.Image
+        o = original_img.transpose(1, 2, 0)
+        aug = real_augmented_img.transpose(1, 2, 0)
+
+        # transform the tensor of the generated image of
+        # shape (batch, channel, height, width) to be digested by wandb.Image
+        g = (generated_augmented_img * 0.5 + 0.5) * 255
+        g = np.squeeze(g.detach().cpu().numpy()).transpose(1,2,0)
+        
+        self.val_images_table.add_data(epoch, wandb.Image(o), wandb.Image(aug), wandb.Image(g))
 
     def log_generation(self):
+        """
+        Log the images to wandb
+        """
         if not self.use_wandb:
             pass
 
