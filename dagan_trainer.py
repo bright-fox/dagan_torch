@@ -1,3 +1,4 @@
+from turtle import pd
 import imageio
 import numpy as np
 import torch
@@ -11,7 +12,6 @@ from PIL import Image
 import PIL
 import warnings
 
-
 class DaganTrainer:
     def __init__(
         self,
@@ -19,16 +19,10 @@ class DaganTrainer:
         discriminator,
         gen_optimizer,
         dis_optimizer,
-        batch_size,
-        visualizer=None,
+        visualizer,
         device="cpu",
         gp_weight=10,
         critic_iterations=5,
-        # print_every=50,
-        # num_tracking_images=0,
-        # save_checkpoint_path=None,
-        # load_checkpoint_path=None,
-        display_transform=None,
     ):
         self.device = device
         self.g = generator.to(device)
@@ -40,22 +34,12 @@ class DaganTrainer:
         self.epoch = 0
         self.gp_weight = gp_weight
         self.critic_iterations = critic_iterations
-        # self.print_every = print_every
-        # self.num_tracking_images = num_tracking_images
-        self.display_transform = display_transform or transforms.ToTensor()
-        # self.checkpoint_path = save_checkpoint_path
         self.visualizer = visualizer
 
-        # Track progress of fixed images throughout the training
-        self.tracking_images = None
-        self.tracking_z = None
-        self.tracking_images_gens = None
-
-        # if load_checkpoint_path:
-        #     self.hydrate_checkpoint(load_checkpoint_path)
-
     def _critic_train_iteration(self, x1, x2):
-        """ """
+        """
+        Train the discriminator
+        """
         # Get generated data
         generated_data = self.sample_generator(x1)
 
@@ -77,7 +61,9 @@ class DaganTrainer:
         self.losses["D"].append(d_loss.item())
 
     def _generator_train_iteration(self, x1):
-        """ """
+        """
+        Train the generator
+        """
         self.g_opt.zero_grad()
 
         # Get generated data
@@ -125,11 +111,8 @@ class DaganTrainer:
 
     def _train_epoch(self, data_loader):
         for i, data in enumerate(data_loader):
-            # if i % self.print_every == 0:
-            #     print("Iteration {}".format(i))
-            #     self.print_progress(data_loader, val_images)
             self.num_steps += 1
-            x1, x2 = data[0].to(self.device), data[1].to(self.device)
+            x1, x2 = data[0].to(torch.float).to(self.device), data[1].to(torch.float).to(self.device)
             self._critic_train_iteration(x1, x2)
             # Only update generator every |critic_iterations| iterations
             if self.num_steps % self.critic_iterations == 0:
@@ -138,34 +121,16 @@ class DaganTrainer:
             self.log_losses()
 
     def train(self, data_loader, epochs, val_dataloader):
-        # if self.tracking_images is None and self.num_tracking_images > 0:
-        #     self.tracking_images = self.sample_val_images(
-        #         self.num_tracking_images // 2, val_images
-        #     )
-        #     self.tracking_images.extend(
-        #         self.sample_train_images(
-        #             self.num_tracking_images - len(self.tracking_images), data_loader
-        #         )
-        #     )
-        #     self.tracking_images = torch.stack(self.tracking_images).to(self.device)
-        #     self.tracking_z = torch.randn((self.num_tracking_images, self.g.z_dim)).to(
-        #         self.device
-        #     )
-        #     self.tracking_images_gens = []
-
-        # Save checkpoint once before training to catch errors
-        # self._save_checkpoint()
-
         start_time = int(time.time())
 
         while self.epoch < epochs:
             print("\nEpoch {}".format(self.epoch))
             print(f"Elapsed time: {(time.time() - start_time) / 60:.2f} minutes\n")
 
-            # train the epoch
-            self._train_epoch(data_loader)
             # log the generations
             self.log_curr_generated_imgs(val_dataloader)
+            # train the epoch
+            self._train_epoch(data_loader)
 
             self.epoch += 1
             # self._save_checkpoint()
@@ -174,24 +139,17 @@ class DaganTrainer:
         self.visualizer.log_generation()
 
     def sample_generator(self, input_images, z=None):
+        """
+        Creates augmentations of the input images with the generator
+        """
         if z is None:
             z = torch.randn((input_images.shape[0], self.g.z_dim)).to(self.device)
         return self.g(input_images, z)
 
-    # def render_img(self, arr):
-    #     arr = (arr * 0.5) + 0.5
-    #     arr = np.uint8(arr * 255)
-    #     imageio.display(Image.fromarray(arr, mode="L").transpose(PIL.Image.TRANSPOSE))
-
-    # def sample_train_images(self, n, data_loader):
-    #     with warnings.catch_warnings():
-    #         warnings.simplefilter("ignore", category=UserWarning)
-    #         return [
-    #             self.display_transform(data_loader.dataset.originals[idx])
-    #             for idx in torch.randint(0, len(data_loader.dataset), (n,))
-    #         ]
-
     def sample_val_images(self, val_dataloader):
+        """
+        images have the shape (CxHxW) and have the range [0, 255]
+        """
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
 
@@ -201,39 +159,6 @@ class DaganTrainer:
                 'augmentation': val_dataloader.dataset.augmentations[idx]
             }
 
-    # def display_generations(self, data_loader, val_images):
-    #     n = 5
-    #     images = self.sample_train_images(n, data_loader) + self.sample_val_images(
-    #         n, val_images
-    #     )
-    #     img_size = images[0].shape[-1]
-    #     images.append(torch.tensor(np.ones((1, img_size, img_size))).float())
-    #     images.append(torch.tensor(np.ones((1, img_size, img_size))).float() * -1)
-    #     self.render_img(torch.cat(images, 1)[0])
-    #     z = torch.randn((len(images), self.g.z_dim)).to(self.device)
-    #     inp = torch.stack(images).to(self.device)
-    #     train_gen = self.g(inp, z).cpu()
-    #     self.render_img(train_gen.reshape(-1, train_gen.shape[-1]))
-
-    # def print_progress(self, data_loader, val_images):
-    #     # set generator to eval mode
-    #     self.g.eval()
-    #     with torch.no_grad():
-    #         if self.should_display_generations:
-    #             self.display_generations(data_loader, val_images)
-    #         if self.num_tracking_images > 0:
-    #             self.tracking_images_gens.append(
-    #                 self.g(self.tracking_images, self.tracking_z).cpu()
-    #             )
-    #     # set generator back to training mode
-    #     self.g.train()
-    #     print("D: {}".format(self.losses["D"][-1]))
-    #     print("Raw D: {}".format(self.losses["D"][-1] - self.losses["GP"][-1]))
-    #     print("GP: {}".format(self.losses["GP"][-1]))
-    #     print("Gradient norm: {}".format(self.losses["gradient_norm"][-1]))
-    #     if self.num_steps > self.critic_iterations:
-    #         print("G: {}".format(self.losses["G"][-1]))
-
     def log_losses(self):
         if self.num_steps % 100 == 0:
             print(f'[INFO] Iteration {self.num_steps}')
@@ -241,48 +166,24 @@ class DaganTrainer:
 
 
     def log_curr_generated_imgs(self, val_dataloader):
-        val_img = self.sample_val_images(val_dataloader)
+        """
+        Logs the image (original, real augmentation, augmentation of generator) to the visualizer
+        """
+        val_imgs = self.sample_val_images(val_dataloader)
+        real_val_img = ((val_imgs['original'] / 255) - 0.5) / 0.5
+
+        # set generator to eval mode
         self.g.eval()
         with torch.no_grad():
             generated_val_img = self.sample_generator(
-                self.display_transform(val_img['original'])[None, :].to(self.device)
+                torch.from_numpy(real_val_img)[None, :].to(torch.float).to(self.device)
             )
+        # set generator back to training mode
         self.g.train()
 
         self.visualizer.add_generated_imgs_to_table(
             self.epoch,
-            val_img['original'],
-            val_img['augmentation'],
+            val_imgs['original'],
+            val_imgs['augmentation'],
             generated_val_img,
         )
-
-
-    # def _save_checkpoint(self):
-    #     if self.checkpoint_path is None:
-    #         return
-    #     checkpoint = {
-    #         "epoch": self.epoch,
-    #         "num_steps": self.num_steps,
-    #         "g": self.g.state_dict(),
-    #         "g_opt": self.g_opt.state_dict(),
-    #         "d": self.d.state_dict(),
-    #         "d_opt": self.d_opt.state_dict(),
-    #         "tracking_images": self.tracking_images,
-    #         "tracking_z": self.tracking_z,
-    #         "tracking_images_gens": self.tracking_images_gens,
-    #     }
-    #     torch.save(checkpoint, self.checkpoint_path)
-
-    # def hydrate_checkpoint(self, checkpoint_path):
-    #     checkpoint = torch.load(checkpoint_path, map_location=self.device)
-    #     self.epoch = checkpoint["epoch"]
-    #     self.num_steps = checkpoint["num_steps"]
-    #
-    #     self.g.load_state_dict(checkpoint["g"])
-    #     self.g_opt.load_state_dict(checkpoint["g_opt"])
-    #     self.d.load_state_dict(checkpoint["d"])
-    #     self.d_opt.load_state_dict(checkpoint["d_opt"])
-    #
-    #     self.tracking_images = checkpoint["tracking_images"]
-    #     self.tracking_z = checkpoint["tracking_z"]
-    #     self.tracking_images_gens = checkpoint["tracking_images_gens"]
