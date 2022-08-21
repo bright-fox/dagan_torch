@@ -1,10 +1,8 @@
-from turtle import pd
 from dagan_trainer import DaganTrainer
 from discriminator import Discriminator
 from generator import Generator
 from dataset import create_dagan_dataloader
 from utils.parser import get_dagan_args
-import torchvision.transforms as transforms
 import torch
 import os
 import torch.optim as optim
