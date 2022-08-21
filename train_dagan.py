@@ -52,7 +52,6 @@ trainer = DaganTrainer(
     discriminator=d,
     gen_optimizer=g_opt,
     dis_optimizer=d_opt,
-    batch_size=args.batch_size,
     visualizer=visualizer,
     device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
     critic_iterations=5,
