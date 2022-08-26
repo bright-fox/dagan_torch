@@ -14,4 +14,7 @@ setup(
     license='LICENSE.txt',
     package_dir={'': 'src'},
     packages=find_packages(where='src'),
+    install_requires=[
+        'torch==1.12.1'
+    ],
 )
