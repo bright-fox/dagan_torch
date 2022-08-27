@@ -1,7 +1,7 @@
 from dagan_trainer import DaganTrainer
-from discriminator import Discriminator
-from generator import Generator
-from dataset import create_dagan_dataloader
+from dagan_torch.discriminator import Discriminator
+from dagan_torch.generator import Generator
+from dagan_torch.dataset import create_dagan_dataloader
 from utils.parser import get_dagan_args
 import torch
 import os
