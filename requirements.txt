@@ -1,0 +1,4 @@
+numpy==1.22.3
+setuptools==61.2.0
+torch==1.12.1
+wandb==0.12.21
