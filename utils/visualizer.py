@@ -16,9 +16,9 @@ class Visualizer():
             self.wandb_run = wandb.init(project='DAGAN', name=args.name, config=args) if not wandb.run else wandb.run
             self.val_images_table = wandb.Table(columns=['Epoch', 'Original', 'Real Augmentation', 'Generated Augmentation'])
 
-    def add_generated_imgs_to_table(self, epoch, original_img, real_augmented_img, generated_augmented_img):
+    def add_imgs_to_table(self, epoch, original, real_aug, gen_aug):
         """
-        Add the images into a wandb table
+        Add the original image, real augmentation and generated augmentation into a wandb table
         """
 
         if not self.use_wandb:
@@ -26,12 +26,12 @@ class Visualizer():
 
         # transform the original and real augmentation image of
         # shape (channel, height, width) to be digested by wandb.Image
-        o = original_img.transpose(1, 2, 0)
-        aug = real_augmented_img.transpose(1, 2, 0)
+        o = original.transpose(1, 2, 0)
+        aug = real_aug.transpose(1, 2, 0)
 
         # transform the tensor of the generated image of
         # shape (batch, channel, height, width) to be digested by wandb.Image
-        g = (generated_augmented_img * 0.5 + 0.5) * 255
+        g = (gen_aug * 0.5 + 0.5) * 255
         g = np.squeeze(g.detach().cpu().numpy()).transpose(1,2,0)
         
         self.val_images_table.add_data(epoch, wandb.Image(o), wandb.Image(aug), wandb.Image(g))

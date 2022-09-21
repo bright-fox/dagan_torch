@@ -182,8 +182,9 @@ class _DecoderBlock(nn.Module):
 
 
 class Generator(nn.Module):
-    def __init__(self, dim, channels, dropout_rate=0.0, z_dim=100):
+    def __init__(self, dim, channels, dropout_rate=0.0, z_dim=100, device='cpu'):
         super().__init__()
+        self.device = device
         self.dim = dim
         self.z_dim = z_dim
         self.channels = channels
@@ -278,7 +279,14 @@ class Generator(nn.Module):
         )
         self.tanh = nn.Tanh()
 
-    def forward(self, x, z):
+    def forward(self, x, z=None):
+        """
+        Input x comes in the shape of (batch, channel, height, width)
+        """
+        # create noise if not given
+        if z is None:
+            z = torch.randn((x.shape[0], self.z_dim)).to(self.device)
+
         # Final output of every encoding block
         all_outputs = [x, self.encode0(x)]
 
@@ -306,3 +314,6 @@ class Generator(nn.Module):
         for i in range(self.num_final_conv):
             curr_input = self._modules["final_conv%d" % i](curr_input)
         return self.tanh(curr_input)
+
+    def augment(self, x):
+        z = torch.randn((x.shape[0] * x.shape[1], self.z_dim)).to(self.device)

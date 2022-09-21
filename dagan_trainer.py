@@ -33,7 +33,7 @@ class DaganTrainer:
         Train the discriminator
         """
         # Get generated data
-        generated_data = self.sample_generator(x1)
+        generated_data = self.g(x1)
 
         d_real = self.d(x1, x2)
         d_generated = self.d(x1, generated_data)
@@ -59,7 +59,7 @@ class DaganTrainer:
         self.g_opt.zero_grad()
 
         # Get generated data
-        generated_data = self.sample_generator(x1)
+        generated_data = self.g(x1)
 
         # Calculate loss and optimize
         d_generated = self.d(x1, generated_data)
@@ -130,14 +130,6 @@ class DaganTrainer:
         # at the end log the generations in table to wandb (hotfix for wandb bug)
         self.visualizer.log_generation()
 
-    def sample_generator(self, input_images, z=None):
-        """
-        Creates augmentations of the input images with the generator
-        """
-        if z is None:
-            z = torch.randn((input_images.shape[0], self.g.z_dim)).to(self.device)
-        return self.g(input_images, z)
-
     def sample_val_images(self, val_dataloader):
         """
         images have the shape (CxHxW) and have the range [0, 255]
@@ -159,7 +151,7 @@ class DaganTrainer:
 
     def log_curr_generated_imgs(self, val_dataloader):
         """
-        Logs the image (original, real augmentation, augmentation of generator) to the visualizer
+        Logs the images (original, real augmentation, augmentation of generator) to the visualizer
         """
         val_imgs = self.sample_val_images(val_dataloader)
         real_val_img = ((val_imgs['original'] / 255) - 0.5) / 0.5
@@ -167,15 +159,13 @@ class DaganTrainer:
         # set generator to eval mode
         self.g.eval()
         with torch.no_grad():
-            generated_val_img = self.sample_generator(
-                torch.from_numpy(real_val_img)[None, :].to(torch.float).to(self.device)
-            )
+            gen_img = self.g(torch.from_numpy(real_val_img)[None, :].to(torch.float).to(self.device))
         # set generator back to training mode
         self.g.train()
 
-        self.visualizer.add_generated_imgs_to_table(
+        self.visualizer.add_imgs_to_table(
             self.epoch,
             val_imgs['original'],
             val_imgs['augmentation'],
-            generated_val_img,
+            gen_img,
         )

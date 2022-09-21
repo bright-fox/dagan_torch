@@ -16,6 +16,8 @@ np.random.seed(0)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 # Load input args
 args = get_dagan_args()
 final_generator_path = args.final_model_path
@@ -39,7 +41,7 @@ in_channels = train_data['orig'].shape[1]
 img_size = args.img_size or train_data['orig'].shape[2]
 
 # init networks and corresponding optimizers
-g = Generator(dim=img_size, channels=in_channels, dropout_rate=args.dropout_rate)
+g = Generator(dim=img_size, channels=in_channels, dropout_rate=args.dropout_rate, device=device)
 d = Discriminator(dim=img_size, channels=in_channels * 2, dropout_rate=args.dropout_rate)
 g_opt = optim.Adam(g.parameters(), lr=0.0001, betas=(0.0, 0.9))
 d_opt = optim.Adam(d.parameters(), lr=0.0001, betas=(0.0, 0.9))
@@ -51,7 +53,7 @@ trainer = DaganTrainer(
     gen_optimizer=g_opt,
     dis_optimizer=d_opt,
     visualizer=visualizer,
-    device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
+    device=device,
     critic_iterations=5,
 )
 trainer.train(
