@@ -27,8 +27,8 @@ def create_data(batch_size):
     originals = []
     augmentations = []
 
-    dynamics_seed = random.randint(1, 100_000_000)
-    visual_seed = random.randint(1, 100_000_000)
+    dynamics_seed = random.randint(1, 1_000_000)
+    visual_seed = random.randint(1, 1_000_000)
     env = dmcr.wrapper.make(
         'cheetah',
         'run',
