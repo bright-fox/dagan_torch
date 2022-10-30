@@ -59,4 +59,9 @@ def get_dagan_args():
         action='store_true',
         help='use wandb'
     )
+
+    # these arguments are only used for the iterative approach
+    parser.add_argument("--epochs_per_iteration", default=1, type=int)
+    parser.add_argument("--max_iterations", default=10, type=int)
+
     return parser.parse_args()

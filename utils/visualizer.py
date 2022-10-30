@@ -8,12 +8,12 @@ class Visualizer():
     - evaluation images are logged in wandb
     """
 
-    def __init__(self, args):
+    def __init__(self, args, wandb_project='DAGAN'):
         self.args = args
         self.current_epoch = 0
         self.use_wandb = args.use_wandb
         if self.use_wandb:
-            self.wandb_run = wandb.init(project='DAGAN', name=args.name, config=args) if not wandb.run else wandb.run
+            self.wandb_run = wandb.init(project=wandb_project, name=args.name, config=args) if not wandb.run else wandb.run
             self.val_images_table = wandb.Table(columns=['Epoch', 'Original', 'Real Augmentation', 'Generated Augmentation'])
 
     def add_imgs_to_table(self, epoch, original, real_aug, gen_aug):

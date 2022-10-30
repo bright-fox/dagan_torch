@@ -1,7 +1,7 @@
 from dagan_trainer import DaganTrainer
 from dagan_torch.discriminator import Discriminator
 from dagan_torch.generator import Generator
-from dagan_torch.dataset import create_dagan_dataloader
+from dagan_torch.dataset import create_dl
 from utils.parser import get_dagan_args
 import torch
 import os
@@ -33,8 +33,8 @@ visualizer = Visualizer(args)
 # load the data
 train_data = np.load(f'{args.dataset_path}/train.npz')
 val_data = np.load(f'{args.dataset_path}/val.npz')
-train_dataloader = create_dagan_dataloader(train_data['orig'], train_data['aug'], args.batch_size)
-val_dataloader = create_dagan_dataloader(val_data['orig'], val_data['aug'], args.batch_size)
+train_dataloader = create_dl(train_data['orig'], train_data['aug'], args.batch_size)
+val_dataloader = create_dl(val_data['orig'], val_data['aug'], args.batch_size)
 
 # get img info
 in_channels = train_data['orig'].shape[1]

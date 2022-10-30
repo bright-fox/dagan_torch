@@ -21,6 +21,6 @@ class DaganDataset(Dataset):
         # scale to [0, 1], then normalize to [-1, 1]
         return ((self.originals[idx] / 255) - 0.5) / 0.5, ((self.augmentations[idx] / 255) - 0.5) / 0.5
 
-def create_dagan_dataloader(originals, augmentations, batch_size):
+def create_dl(originals, augmentations, batch_size):
     train_dataset = DaganDataset(originals, augmentations)
     return DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=1)

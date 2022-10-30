@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 import time
 from torch.autograd import Variable
 from torch.autograd import grad as torch_grad
@@ -120,7 +121,7 @@ class DaganTrainer:
             print(f"Elapsed time: {(time.time() - start_time) / 60:.2f} minutes\n")
 
             # log the generations
-            self.log_curr_generated_imgs(val_dataloader)
+            self.log_augmentations(val_dataloader)
             # train the epoch
             self._train_epoch(data_loader)
 
@@ -149,11 +150,11 @@ class DaganTrainer:
             self.visualizer.log_losses(self.losses)
 
 
-    def log_curr_generated_imgs(self, val_dataloader):
+    def log_augmentations(self, val_dl):
         """
         Logs the images (original, real augmentation, augmentation of generator) to the visualizer
         """
-        val_imgs = self.sample_val_images(val_dataloader)
+        val_imgs = self.sample_val_images(val_dl)
         real_val_img = ((val_imgs['original'] / 255) - 0.5) / 0.5
 
         # set generator to eval mode
@@ -169,3 +170,34 @@ class DaganTrainer:
             val_imgs['augmentation'],
             gen_img,
         )
+
+    def store_augmentations(self, val_dl, path):
+        """
+        Stores the augmentations in the specified path
+        """
+        self.g.eval()
+
+        originals = val_dl.dataset.originals[:]
+        imgs = ((originals / 255) - 0.5) / 0.5
+
+        with torch.no_grad():
+            augs = self.g(torch.from_numpy(imgs).to(torch.float).to(self.device))
+            augs = augs.detach().cpu().numpy()
+
+        np.savez(path, orig=originals, augs=augs)
+        
+        self.g.train()
+
+
+    def train_iteratively(self, epochs, dl, val_dl):
+        start_time = int(time.time())
+
+        for e in range(epochs):
+            print(f'\nEpoch {self.epoch}')
+            self._train_epoch(dl)
+            self.epoch += 1
+
+        # print elapsed time
+        print(f"Elapsed time for current iteration: {(time.time() - start_time) / 60:.2f} minutes\n")
+        # log current progress
+        self.log_augmentations(val_dl)
