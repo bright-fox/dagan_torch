@@ -47,11 +47,11 @@ class Visualizer():
 
     def log_losses(self, losses):
         # print losses to console
-        print("D: {}".format(losses["D"][-1]))
-        print("Raw D: {}".format(losses["D"][-1] - losses["GP"][-1]))
-        print("GP: {}".format(losses["GP"][-1]))
-        print("Gradient norm: {}".format(losses["gradient_norm"][-1]))
-        print("G: {}".format(losses["G"][-1]))
+        # print("D: {}".format(losses["D"][-1]))
+        # print("Raw D: {}".format(losses["D"][-1] - losses["GP"][-1]))
+        # print("GP: {}".format(losses["GP"][-1]))
+        # print("Gradient norm: {}".format(losses["gradient_norm"][-1]))
+        # print("G: {}".format(losses["G"][-1]))
 
         # log losses to wandb
         if self.use_wandb:
