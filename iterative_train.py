@@ -92,7 +92,7 @@ args = get_dagan_args()
 model_path = os.path.join(args.model_path, args.name)
 pathlib.Path(model_path).mkdir(parents=True, exist_ok=True)
 val_path = os.path.join(model_path, 'out')
-os.mkdir(val_path)
+pathlib.Path(val_path).mkdir(parents=True, exist_ok=True)
 
 # init wandb
 vis = Visualizer(args, wandb_project='Iterative_Dagan')
