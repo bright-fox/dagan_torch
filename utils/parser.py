@@ -49,6 +49,7 @@ def get_dagan_args():
         help="Dropout rate to use within network architecture.",
     )
     parser.add_argument(
+        "-n",
         "--name",
         type=str,
         default="dagan",
