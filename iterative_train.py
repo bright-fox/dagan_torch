@@ -1,3 +1,4 @@
+import pathlib
 import random
 from dagan_trainer import DaganTrainer
 from dagan_torch.discriminator import Discriminator
@@ -87,18 +88,14 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # Load input args
 args = get_dagan_args()
 
-model_path = args.final_model_path
-# Input sanity checks
-model_dir = os.path.dirname(model_path) or os.getcwd()
-if not os.access(model_dir, os.W_OK):
-    raise ValueError(model_path + " is not a valid filepath.")
-
-# make dir for validation images
-path = os.path.join(model_path, args.name)
-os.mkdir(path)
+# make model and output dir
+model_path = os.path.join(args.model_path, args.name)
+pathlib.Path(model_path).mkdir(parents=True, exist_ok=True)
+val_path = os.path.join(model_path, 'out')
+os.mkdir(val_path)
 
 # init wandb
-vis = Visualizer(args, wandb_project='DAGAN_iterative_test')
+vis = Visualizer(args, wandb_project='Iterative_Dagan')
 
 # load the data
 initial_train_data = np.load(f'{args.dataset_path}/train.npz')
@@ -131,17 +128,21 @@ trainer = DaganTrainer(
 print('Start initial training..')
 trainer.train_iteratively(args.initial_epochs, train_dl, val_dl)
 
+# Save final generator model
+torch.save(trainer.g, os.path.join(model_path, 'model_before_tune.pt'))
+torch.save(trainer.g.state_dict(), os.path.join(model_path, 'state_dict_before_tune.pt'))
+
 # the further iterations
 print('Start iterative training..')
 for i in range(args.max_iterations):
     train_dl, val_dl = create_data(args.batch_size, args.data_per_iteration)
     trainer.train_iteratively(args.epochs_per_iteration, train_dl, val_dl, detach_encoder=args.detach_encoder)
-    trainer.store_augmentations(val_dl, os.path.join(path, str(i)))
+    trainer.store_augmentations(val_dl, os.path.join(val_path, str(i)))
 
 
 # final call to visualize the generations of the epochs
 trainer.visualizer.log_generation()
 
 # Save final generator model
-torch.save(trainer.g, f'{model_path}/{args.name}_model.pt')
-torch.save(trainer.g.state_dict(), f'{model_path}/{args.name}_state_dict.pt')
+torch.save(trainer.g, os.path.join(model_path, 'model.pt'))
+torch.save(trainer.g.state_dict(), os.path.join(model_path, 'state_dict.pt'))

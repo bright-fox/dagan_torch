@@ -17,7 +17,7 @@ def get_dagan_args():
         ,
     )
     parser.add_argument(
-        "final_model_path", type=str, help="Filepath to save final dagan model."
+        "--model_path", default="./output", type=str, help="Filepath to save final dagan model."
     )
     parser.add_argument(
         "--batch_size",
