@@ -279,7 +279,7 @@ class Generator(nn.Module):
         )
         self.tanh = nn.Tanh()
 
-    def forward(self, x, z=None, detach_encoder=False):
+    def forward(self, x, detach, z=None):
         """
         x: input comes in the shape of (batch, channel, height, width)
         detach_encoder: determines whether it should detach all encoding layers (used for iterative training)
@@ -291,7 +291,7 @@ class Generator(nn.Module):
         # Final output of every encoding block
 
         initial_encoded_out = self.encode0(x)
-        if detach_encoder:
+        if 'gen' in detach:
             initial_encoded_out = initial_encoded_out.detach()
 
         all_outputs = [x, initial_encoded_out]
@@ -300,7 +300,7 @@ class Generator(nn.Module):
         out = [x, initial_encoded_out]
         for i in range(1, len(self.layer_sizes)):
             out = self._modules["encode%d" % i](out)
-            if detach_encoder:
+            if 'gen' in detach:
                 out = [o.detach() for o in out]
             all_outputs.append(out[1])
 

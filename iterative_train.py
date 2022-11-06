@@ -136,7 +136,7 @@ torch.save(trainer.g.state_dict(), os.path.join(model_path, 'state_dict_before_t
 print('Start iterative training..')
 for i in range(args.max_iterations):
     train_dl, val_dl = create_data(args.batch_size, args.data_per_iteration)
-    trainer.train_iteratively(args.epochs_per_iteration, train_dl, val_dl, detach_encoder=args.detach_encoder)
+    trainer.train_iteratively(args.epochs_per_iteration, train_dl, val_dl, args.detach)
     trainer.store_augmentations(val_dl, os.path.join(val_path, str(i)))
 
 

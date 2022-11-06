@@ -64,7 +64,7 @@ def get_dagan_args():
     parser.add_argument("--epochs_per_iteration", default=1, type=int)
     parser.add_argument("--data_per_iteration", default=1000, type=int, help="Train dataset size per iteration")
     parser.add_argument("--max_iterations", default=10, type=int)
-    parser.add_argument("--detach_encoder", action='store_true')
     parser.add_argument("--initial_epochs", default=20)
+    parser.add_argument("-d", "--detach", nargs="+", help="networks to freeze", default=[], choices=['gen', 'disc', 'noise'])
 
     return parser.parse_args()
