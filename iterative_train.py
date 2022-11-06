@@ -20,7 +20,7 @@ torch.backends.cudnn.benchmark = False
 
 vary = [v for v in dmcr.DMCR_VARY if v != "camera"]
 
-def create_data(batch_size):
+def create_data(batch_size, max_train_size=None):
     """
     Creates data loader for one episode of a random environment
     """
@@ -67,8 +67,16 @@ def create_data(batch_size):
     o = np.array(originals)
     a = np.array(augmentations)
     num_val_data = 10
-    train_dl = create_dl(o[:-1*num_val_data], a[:-1*num_val_data], batch_size)
-    val_dl = create_dl(o[-1*num_val_data:], a[-1*num_val_data:], batch_size)
+
+    # shuffle and create train and val dl
+    indices = np.arange(o.shape[0])
+    np.random.shuffle(indices)
+
+    if max_train_size is None or max_train_size >= o.shape[0] - num_val_data:
+        max_train_size = o.shape[0] - num_val_data
+
+    train_dl = create_dl(o[indices[:max_train_size]], a[indices[:max_train_size]], batch_size)
+    val_dl = create_dl(o[indices[max_train_size:max_train_size+num_val_data]], a[indices[max_train_size:max_train_size+num_val_data]], batch_size)
 
     return train_dl, val_dl
 
@@ -89,7 +97,7 @@ path = os.path.join(model_path, args.name)
 os.mkdir(path)
 
 # init wandb
-vis = Visualizer(args, wandb_project='DAGAN_iterative')
+vis = Visualizer(args, wandb_project='DAGAN_iterative_test')
 
 # load the data
 initial_train_data = np.load(f'{args.dataset_path}/train.npz')
@@ -119,12 +127,15 @@ trainer = DaganTrainer(
 )
 
 # initial training 
-trainer.train_iteratively(20, train_dl, val_dl)
+print('Start initial training..')
+trainer.train_iteratively(args.initial_epochs, train_dl, val_dl)
 
 # the further iterations
+print('Start iterative training..')
 for i in range(args.max_iterations):
-    train_dl, val_dl = create_data(args.batch_size)
-    trainer.train_iteratively(args.epochs_per_iteration, train_dl, val_dl)
+
+    train_dl, val_dl = create_data(args.batch_size, args.batch_size * 10)
+    trainer.train_iteratively(args.epochs_per_iteration, train_dl, val_dl, detach_encoder=args.detach_encoder)
     trainer.store_augmentations(val_dl, os.path.join(path, str(i)))
 
 

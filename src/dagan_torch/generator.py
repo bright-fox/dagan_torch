@@ -279,21 +279,29 @@ class Generator(nn.Module):
         )
         self.tanh = nn.Tanh()
 
-    def forward(self, x, z=None):
+    def forward(self, x, z=None, detach_encoder=False):
         """
-        Input x comes in the shape of (batch, channel, height, width)
+        x: input comes in the shape of (batch, channel, height, width)
+        detach_encoder: determines whether it should detach all encoding layers (used for iterative training)
         """
         # create noise if not given
         if z is None:
             z = torch.randn((x.shape[0], self.z_dim)).to(self.device)
 
         # Final output of every encoding block
-        all_outputs = [x, self.encode0(x)]
+
+        initial_encoded_out = self.encode0(x)
+        if detach_encoder:
+            initial_encoded_out = initial_encoded_out.detach()
+
+        all_outputs = [x, initial_encoded_out]
 
         # Last 2 layer outputs
-        out = [x, self.encode0(x)]
+        out = [x, initial_encoded_out]
         for i in range(1, len(self.layer_sizes)):
             out = self._modules["encode%d" % i](out)
+            if detach_encoder:
+                out = [o.detach() for o in out]
             all_outputs.append(out[1])
 
         pre_input, curr_input = None, out[1]
@@ -314,6 +322,3 @@ class Generator(nn.Module):
         for i in range(self.num_final_conv):
             curr_input = self._modules["final_conv%d" % i](curr_input)
         return self.tanh(curr_input)
-
-    def augment(self, x):
-        z = torch.randn((x.shape[0] * x.shape[1], self.z_dim)).to(self.device)

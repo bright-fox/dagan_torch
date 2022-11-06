@@ -53,14 +53,14 @@ class DaganTrainer:
         # Record loss
         self.losses["D"].append(d_loss.item())
 
-    def _generator_train_iteration(self, x1):
+    def _generator_train_iteration(self, x1, detach_encoder=False):
         """
         Train the generator
         """
         self.g_opt.zero_grad()
 
         # Get generated data
-        generated_data = self.g(x1)
+        generated_data = self.g(x1, detach_encoder=detach_encoder)
 
         # Calculate loss and optimize
         d_generated = self.d(x1, generated_data)
@@ -102,14 +102,14 @@ class DaganTrainer:
         # Return gradient penalty
         return self.gp_weight * ((gradients_norm - 1) ** 2).mean()
 
-    def _train_epoch(self, data_loader):
+    def _train_epoch(self, data_loader, detach_encoder=False):
         for i, data in enumerate(data_loader):
             self.num_steps += 1
             x1, x2 = data[0].to(torch.float).to(self.device), data[1].to(torch.float).to(self.device)
             self._critic_train_iteration(x1, x2)
             # Only update generator every |critic_iterations| iterations
             if self.num_steps % self.critic_iterations == 0:
-                self._generator_train_iteration(x1)
+                self._generator_train_iteration(x1, detach_encoder=detach_encoder)
 
             self.log_losses()
 
@@ -189,12 +189,12 @@ class DaganTrainer:
         self.g.train()
 
 
-    def train_iteratively(self, epochs, dl, val_dl):
+    def train_iteratively(self, epochs, dl, val_dl, detach_encoder=False):
         start_time = int(time.time())
 
         for e in range(epochs):
             print(f'\nEpoch {self.epoch}')
-            self._train_epoch(dl)
+            self._train_epoch(dl, detach_encoder=detach_encoder)
             self.epoch += 1
 
         # print elapsed time
