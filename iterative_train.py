@@ -72,6 +72,7 @@ def create_data(batch_size, max_train_size=None):
     indices = np.arange(o.shape[0])
     np.random.shuffle(indices)
 
+    # take the specified train dataset size or the maximum that is possible
     if max_train_size is None or max_train_size >= o.shape[0] - num_val_data:
         max_train_size = o.shape[0] - num_val_data
 
@@ -133,8 +134,7 @@ trainer.train_iteratively(args.initial_epochs, train_dl, val_dl)
 # the further iterations
 print('Start iterative training..')
 for i in range(args.max_iterations):
-
-    train_dl, val_dl = create_data(args.batch_size, args.batch_size * 10)
+    train_dl, val_dl = create_data(args.batch_size, args.data_per_iteration)
     trainer.train_iteratively(args.epochs_per_iteration, train_dl, val_dl, detach_encoder=args.detach_encoder)
     trainer.store_augmentations(val_dl, os.path.join(path, str(i)))
 

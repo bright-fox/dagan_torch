@@ -62,6 +62,7 @@ def get_dagan_args():
 
     # these arguments are only used for the iterative approach
     parser.add_argument("--epochs_per_iteration", default=1, type=int)
+    parser.add_argument("--data_per_iteration", default=1000, type=int, help="Train dataset size per iteration")
     parser.add_argument("--max_iterations", default=10, type=int)
     parser.add_argument("--detach_encoder", action='store_true')
     parser.add_argument("--initial_epochs", default=20)
