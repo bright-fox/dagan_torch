@@ -176,15 +176,16 @@ class Discriminator(nn.Module):
         self.leaky_relu = nn.LeakyReLU(0.2)
         self.dense2 = nn.Linear(self.layer_sizes[-1] * self.dim_arr[-1] ** 2 + 1024, 1)
 
-    def forward(self, x1, x2, detach):
+    def forward(self, x1, x2, detach=[]):
         x = torch.cat([x1, x2], 1)
-        out = [x, self.encode0(x)]
+        initial_encode = self.encode0(x)
         if 'disc' in detach:
-            out = out.detach()
+            initial_encode = initial_encode.detach()
+        out = [x, initial_encode]
 
         for i in range(1, len(self.layer_sizes)):
             out = self._modules["encode%d" % i](out)
-            if 'disc' in detach:
+            if 'disc' in detach and i < (len(self.layer_sizes) - 1):
                 out = [o.detach() for o in out]
         out = out[1]
 
