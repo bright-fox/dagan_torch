@@ -279,7 +279,7 @@ class Generator(nn.Module):
         )
         self.tanh = nn.Tanh()
 
-    def forward(self, x, detach=[], z=None):
+    def forward(self, x, detach={}, z=None):
         """
         x: input comes in the shape of (batch, channel, height, width)
         detach_encoder: determines whether it should detach all encoding layers (used for iterative training)
@@ -300,7 +300,7 @@ class Generator(nn.Module):
         out = [x, initial_encoded_out]
         for i in range(1, len(self.layer_sizes)):
             out = self._modules["encode%d" % i](out)
-            if 'gen' in detach and i < (len(self.layer_sizes) - 1):
+            if 'gen' in detach and i < detach['gen']:
                 out = [o.detach() for o in out]
             all_outputs.append(out[1])
 
@@ -310,6 +310,8 @@ class Generator(nn.Module):
                 curr_input = torch.cat([curr_input, all_outputs[-i - 1]], 1)
             if i < self.noise_encoders:
                 z_out = self._modules["z_reshape%d" % i](z)
+                if 'noise' in detach and i < detach['noise']:
+                    z_out = z_out.detach()
 
                 curr_dim = self.dim_arr[-i - 1]
                 z_out = z_out.view(-1, self.z_channels[i], curr_dim, curr_dim)

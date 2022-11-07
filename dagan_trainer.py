@@ -189,7 +189,7 @@ class DaganTrainer:
         self.g.train()
 
 
-    def train_iteratively(self, epochs, dl, val_dl, detach=[]):
+    def train_iteratively(self, epochs, dl, val_dl, detach={}):
         start_time = int(time.time())
 
         for e in range(epochs):

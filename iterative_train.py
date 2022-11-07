@@ -88,6 +88,20 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # Load input args
 args = get_dagan_args()
 
+# sanity check the args
+if len(args.detach) != len(args.layer_sizes):
+    raise ValueError('Detach and amount of layers to detach should correspond to each other')
+
+args.detach = {d: args.layer_sizes[i] for i, d in enumerate(args.detach)}
+
+for network, size in args.detach.items():
+    if network == 'gen' and size > 4:
+        raise ValueError('Encoder of generator only has 4 layers to freeze')
+    if network == 'disc' and size > 4:
+        raise ValueError('Discriminator only has 4 layers to freeze')
+    if network == 'noise' and size > 3:
+        raise ValueError('Noise encoder only has 3 layers to freeze')
+
 # make model and output dir
 model_path = os.path.join(args.model_path, args.name)
 pathlib.Path(model_path).mkdir(parents=True, exist_ok=True)
