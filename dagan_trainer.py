@@ -117,7 +117,7 @@ class DaganTrainer:
         start_time = int(time.time())
 
         while self.epoch < epochs:
-            print("\nEpoch {}".format(self.epoch))
+            print("\n[INFO] Epoch {}".format(self.epoch))
             print(f"Elapsed time: {(time.time() - start_time) / 60:.2f} minutes\n")
 
             # log the generations
@@ -146,9 +146,7 @@ class DaganTrainer:
 
     def log_losses(self):
         if self.num_steps % 100 == 0:
-            print(f'[INFO] Iteration {self.num_steps}')
             self.visualizer.log_losses(self.losses)
-
 
     def log_augmentations(self, val_dl):
         """

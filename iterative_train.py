@@ -179,9 +179,11 @@ def main():
         trainer.store_augmentations(val_dl, os.path.join(val_path, str(i)))
 
     # final call to visualize the generations of the epochs
+    print('Saving validation images on WandB..')
     trainer.visualizer.log_generation()
 
     # Save final generator model
+    print('Saving models..')
     torch.save(trainer.g, os.path.join(model_path, 'model.pt'))
     torch.save(trainer.g.state_dict(), os.path.join(model_path, 'state_dict.pt'))
 
