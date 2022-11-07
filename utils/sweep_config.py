@@ -1,4 +1,4 @@
-batch_config = {
+sweep_config = {
     'method': 'grid',
     'metric': {
         'name': 'G',
@@ -12,6 +12,8 @@ batch_config = {
                 {'gen': 3, 'disc': 3, 'noise': 2}, # all detach
             ],
         },
-        'gp_weight': [0, 2]
+        'gp_weight': {
+            'values': [0, 2, 5]
+        }
     }
 }
