@@ -1,11 +1,14 @@
 import pathlib
 import random
+import uuid
+import wandb
 from dagan_trainer import DaganTrainer
 from dagan_torch.discriminator import Discriminator
 from dagan_torch.generator import Generator
 from dagan_torch.dataset import create_dl
 from utils.parser import get_dagan_args
 from utils.visualizer import Visualizer
+from utils.sweep_config import sweep_config
 import torch
 import os
 import torch.optim as optim
@@ -18,8 +21,12 @@ np.random.seed(0)
 
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+# Load input args
+args = get_dagan_args()
 vary = [v for v in dmcr.DMCR_VARY if v != "camera"]
+wandb.login()
 
 def create_data(batch_size, max_train_size=None):
     """
@@ -82,81 +89,106 @@ def create_data(batch_size, max_train_size=None):
 
     return train_dl, val_dl
 
+def main():
+    # init wandb and visualizer
+    vis = Visualizer(args, wandb_project='Iterative_Dagan')
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # if sweep then load sweep config into args
+    if args.sweep:
+        config = wandb.config
+        print(f'Config: {config}')
 
-# Load input args
-args = get_dagan_args()
+        # overwrite args with values from sweep config
+        for key in config.keys():
+            setattr(args, key, config[key])
 
-# sanity check the args
-if len(args.detach) != len(args.layer_sizes):
-    raise ValueError('Detach and amount of layers to detach should correspond to each other')
+        # each sweep run will get its own uniquie identifier
+        id = uuid.uuid4()
+        model_path = os.path.join(args.model_path, args.name, id.hex)
+        print('Models are saved at', model_path)
 
-args.detach = {d: args.layer_sizes[i] for i, d in enumerate(args.detach)}
+    else:
+        # sanity check the args
+        if len(args.detach) != len(args.layer_sizes):
+            raise ValueError('Detach and amount of layers to detach should correspond to each other')
 
-for network, size in args.detach.items():
-    if network == 'gen' and size > 4:
-        raise ValueError('Encoder of generator only has 4 layers to freeze')
-    if network == 'disc' and size > 4:
-        raise ValueError('Discriminator only has 4 layers to freeze')
-    if network == 'noise' and size > 3:
-        raise ValueError('Noise encoder only has 3 layers to freeze')
+        # set the layers to detach for networks
+        args.detach = {d: args.layer_sizes[i] for i, d in enumerate(args.detach)}
 
-# make model and output dir
-model_path = os.path.join(args.model_path, args.name)
-pathlib.Path(model_path).mkdir(parents=True, exist_ok=True)
-val_path = os.path.join(model_path, 'out')
-pathlib.Path(val_path).mkdir(parents=True, exist_ok=True)
+        for network, size in args.detach.items():
+            if network == 'gen' and size > 4:
+                raise ValueError('Encoder of generator only has 4 layers to freeze')
+            if network == 'disc' and size > 4:
+                raise ValueError('Discriminator only has 4 layers to freeze')
+            if network == 'noise' and size > 3:
+                raise ValueError('Noise encoder only has 3 layers to freeze')
 
-# init wandb
-vis = Visualizer(args, wandb_project='Iterative_Dagan')
+        # create model path
+        model_path = os.path.join(args.model_path, args.name)
 
-# load the data
-initial_train_data = np.load(f'{args.dataset_path}/train.npz')
-initial_val_data = np.load(f'{args.dataset_path}/val.npz')
-train_dl = create_dl(initial_train_data['orig'], initial_train_data['aug'], args.batch_size)
-val_dl = create_dl(initial_val_data['orig'], initial_val_data['aug'], args.batch_size)
+    # create model dir
+    print('Creating output folders..')
+    pathlib.Path(model_path).mkdir(parents=True, exist_ok=True)
+    val_path = os.path.join(model_path, 'out')
+    pathlib.Path(val_path).mkdir(parents=True, exist_ok=True)
 
-# get img info
-in_channels = initial_train_data['orig'].shape[1]
-img_size = args.img_size or initial_train_data['orig'].shape[2]
+    # load the data
+    print('Loading the initial..')
+    initial_train_data = np.load(f'{args.dataset_path}/train.npz')
+    initial_val_data = np.load(f'{args.dataset_path}/val.npz')
+    train_dl = create_dl(initial_train_data['orig'], initial_train_data['aug'], args.batch_size)
+    val_dl = create_dl(initial_val_data['orig'], initial_val_data['aug'], args.batch_size)
 
-# init networks and corresponding optimizers
-g = Generator(dim=img_size, channels=in_channels, dropout_rate=args.dropout_rate, device=device)
-d = Discriminator(dim=img_size, channels=in_channels * 2, dropout_rate=args.dropout_rate)
-g_opt = optim.Adam(g.parameters(), lr=0.0001, betas=(0.0, 0.9))
-d_opt = optim.Adam(d.parameters(), lr=0.0001, betas=(0.0, 0.9))
+    # get img info
+    in_channels = initial_train_data['orig'].shape[1]
+    img_size = args.img_size or initial_train_data['orig'].shape[2]
 
-# train the models
-trainer = DaganTrainer(
-    generator=g,
-    discriminator=d,
-    gen_optimizer=g_opt,
-    dis_optimizer=d_opt,
-    visualizer=vis,
-    device=device,
-    critic_iterations=5,
-)
+    # init networks and corresponding optimizers
+    print('Initialize the networks..')
+    g = Generator(dim=img_size, channels=in_channels, dropout_rate=args.dropout_rate, device=device)
+    d = Discriminator(dim=img_size, channels=in_channels * 2, dropout_rate=args.dropout_rate)
+    g_opt = optim.Adam(g.parameters(), lr=0.0001, betas=(0.0, 0.9))
+    d_opt = optim.Adam(d.parameters(), lr=0.0001, betas=(0.0, 0.9))
 
-# initial training 
-print('Start initial training..')
-trainer.train_iteratively(args.initial_epochs, train_dl, val_dl)
+    # train the models
+    trainer = DaganTrainer(
+        generator=g,
+        discriminator=d,
+        gen_optimizer=g_opt,
+        dis_optimizer=d_opt,
+        visualizer=vis,
+        device=device,
+        critic_iterations=5,
+    )
 
-# Save final generator model
-torch.save(trainer.g, os.path.join(model_path, 'model_before_tune.pt'))
-torch.save(trainer.g.state_dict(), os.path.join(model_path, 'state_dict_before_tune.pt'))
+    # initial training 
+    print('Start initial training..')
+    trainer.train_iteratively(args.initial_epochs, train_dl, val_dl)
 
-# the further iterations
-print('Start iterative training..')
-for i in range(args.max_iterations):
-    train_dl, val_dl = create_data(args.batch_size, args.data_per_iteration)
-    trainer.train_iteratively(args.epochs_per_iteration, train_dl, val_dl, args.detach)
-    trainer.store_augmentations(val_dl, os.path.join(val_path, str(i)))
+    # Save final generator model
+    torch.save(trainer.g, os.path.join(model_path, 'model_before_tune.pt'))
+    torch.save(trainer.g.state_dict(), os.path.join(model_path, 'state_dict_before_tune.pt'))
 
+    # Fine tuning iterations
+    if args.sweep:
+        trainer.gp_weight = args.gp_weight
+    print('Start fine-tuning..')
+    for i in range(args.max_iterations):
+        train_dl, val_dl = create_data(args.batch_size, args.data_per_iteration)
+        trainer.train_iteratively(args.epochs_per_iteration, train_dl, val_dl, args.detach)
+        trainer.store_augmentations(val_dl, os.path.join(val_path, str(i)))
 
-# final call to visualize the generations of the epochs
-trainer.visualizer.log_generation()
+    # final call to visualize the generations of the epochs
+    trainer.visualizer.log_generation()
 
-# Save final generator model
-torch.save(trainer.g, os.path.join(model_path, 'model.pt'))
-torch.save(trainer.g.state_dict(), os.path.join(model_path, 'state_dict.pt'))
+    # Save final generator model
+    torch.save(trainer.g, os.path.join(model_path, 'model.pt'))
+    torch.save(trainer.g.state_dict(), os.path.join(model_path, 'state_dict.pt'))
+
+if __name__ == '__main__':
+    if args.sweep:
+        sweep_config = sweep_config
+        sweep_id = wandb.sweep(sweep=sweep_config, project='Iterative_DAGAN_sweep')
+        wandb.agent(sweep_id, function=main)
+    else:
+        main()
