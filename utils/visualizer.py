@@ -11,7 +11,10 @@ class Visualizer():
     def __init__(self, args, wandb_project='DAGAN'):
         self.args = args
         self.current_epoch = 0
-        self.wandb_run = wandb.init(project=wandb_project, name=args.name)
+        if args.sweep:
+            self.wandb_run = wandb.init(project=wandb_project)
+        else:
+            self.wandb_run = wandb.init(project=wandb_project, name=args.name, config=args)
         self.val_images_table = wandb.Table(columns=['Epoch', 'Original', 'Real Augmentation', 'Generated Augmentation'])
 
     def add_imgs_to_table(self, epoch, original, real_aug, gen_aug):
