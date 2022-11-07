@@ -56,11 +56,6 @@ def get_dagan_args():
         default="dagan",
         help="Name of the model, as well as the wandb run"
     )
-    parser.add_argument(
-        "--use_wandb",
-        action='store_true',
-        help='use wandb'
-    )
 
     # these arguments are only used for the iterative approach
     parser.add_argument("--epochs_per_iteration", default=1, type=int)
@@ -69,5 +64,8 @@ def get_dagan_args():
     parser.add_argument("--initial_epochs", default=20, type=int)
     parser.add_argument("-d", "--detach", nargs="+", help="networks to freeze", default=[], choices=['gen', 'disc', 'noise'])
     parser.add_argument("-l", "--layer_sizes", nargs="+", help="layers to detach", default=[], type=int)
+
+    # sweep arguments
+    parser.add_argument('-s', '--sweep', action='store_true', help='do wandb sweep')
 
     return parser.parse_args()
