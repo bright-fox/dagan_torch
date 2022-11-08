@@ -57,15 +57,18 @@ def get_dagan_args():
         help="Name of the model, as well as the wandb run"
     )
 
+    # wandb
+    parser.add_argument("--wandb_project_name", default="DAGAN", help="Name for WandB project")
+    parser.add_argument('-s', '--sweep', action='store_true', help='do wandb sweep')
+
     # these arguments are only used for the iterative approach
+    parser.add_argument("--initial_epochs", default=20, type=int)
+    parser.add_argument("--max_iterations", default=10, type=int)
     parser.add_argument("--epochs_per_iteration", default=1, type=int)
     parser.add_argument("--data_per_iteration", default=1000, type=int, help="Train dataset size per iteration")
-    parser.add_argument("--max_iterations", default=10, type=int)
-    parser.add_argument("--initial_epochs", default=20, type=int)
+    parser.add_argument("--data_ratio", default=1.0, type=float, help="ratio between new and old data with range [0,1]\n1 -> only new 0 -> only old")
+    
     parser.add_argument("-d", "--detach", nargs="+", help="networks to freeze", default=[], choices=['gen', 'disc', 'noise'])
     parser.add_argument("-l", "--layer_sizes", nargs="+", help="layers to detach", default=[], type=int)
-
-    # sweep arguments
-    parser.add_argument('-s', '--sweep', action='store_true', help='do wandb sweep')
 
     return parser.parse_args()
