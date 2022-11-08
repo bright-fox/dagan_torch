@@ -191,7 +191,7 @@ class DaganTrainer:
         start_time = int(time.time())
 
         for e in range(epochs):
-            print(f'\nEpoch {self.epoch}')
+            print(f'\n[INFO] Epoch {self.epoch}')
             self._train_epoch(dl, detach)
             self.epoch += 1
 

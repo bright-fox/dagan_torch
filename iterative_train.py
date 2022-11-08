@@ -163,6 +163,7 @@ def main():
 
     # initial training 
     print('Start initial training..')
+    print('[DEBUG]: gp_weight:', trainer.gp_weight)
     trainer.train_iteratively(args.initial_epochs, train_dl, val_dl)
 
     # Save final generator model
@@ -173,6 +174,7 @@ def main():
     if args.sweep:
         trainer.gp_weight = args.gp_weight
     print('Start fine-tuning..')
+    print('[DEBUG]: gp_weight:', trainer.gp_weight)
     for i in range(args.max_iterations):
         train_dl, val_dl = create_data(args.batch_size, args.data_per_iteration)
         trainer.train_iteratively(args.epochs_per_iteration, train_dl, val_dl, args.detach)
