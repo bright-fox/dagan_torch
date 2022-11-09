@@ -60,6 +60,7 @@ def get_dagan_args():
     # wandb
     parser.add_argument("--wandb_project_name", default="DAGAN", help="Name for WandB project")
     parser.add_argument('-s', '--sweep', action='store_true', help='do wandb sweep')
+    parser.add_argument('--sweep_config', default='replay_buffer', help='sweep config name', choices=['gp', 'replay_buffer'])
 
     # these arguments are only used for the iterative approach
     parser.add_argument("--initial_epochs", default=20, type=int)
@@ -68,8 +69,10 @@ def get_dagan_args():
     parser.add_argument("-t", "--trajectories", default=1, type=int, help="number of trajectories to collect per iteration")
     parser.add_argument("--data_ratio", default=1.0, type=float, help="ratio between new and old data with range [0,1]\n1 -> only new 0 -> only old")
     
-    parser.add_argument("-n", "--networks_to_detach", nargs="+", help="networks to detach", default=[], choices=['gen', 'disc', 'noise'])
-    parser.add_argument("-l", "--layer_sizes_to_detach", nargs="+", help="layers to detach", default=[], type=int)
+    parser.add_argument("--networks_to_detach", nargs="+", help="networks to detach", default=[], choices=['gen', 'disc', 'noise'])
+    parser.add_argument("--layer_sizes_to_detach", nargs="+", help="layers to detach", default=[], type=int)
+    # Choices: [fine_tune: use mostly small sample of new data | adjust: add new data to replay buffer and continue training]
+    parser.add_argument("--iteration_type", default="fine_tune", type=str, help="type of iterative training", choices=['adjust', 'fine_tune'])
 
     return parser.parse_args()
 

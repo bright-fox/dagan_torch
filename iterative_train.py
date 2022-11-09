@@ -9,7 +9,7 @@ from dagan_torch.dataset import create_dl
 from utils.parser import get_dagan_args, prepare_args
 from utils.utils import create_output_dirs, load_data, sample_data, save_model, update_data
 from utils.logger import Logger
-from utils.sweep_config import sweep_config
+from utils.sweep_config import get_sweep_config
 import torch
 import os
 import torch.optim as optim
@@ -98,10 +98,8 @@ def main():
     model_path, val_path = create_output_dirs(args.model_path, args.name, args.sweep)
 
     # load the data
-    print('Loading the initial..')
+    print('Loading the initial data..')
     train_data, val_data = load_data(args.dataset.path)
-    train_dl = create_dl(train_data['o'], train_data['o'], args.batch_size)
-    val_dl = create_dl(val_data['o'], val_data['a'], args.batch_size)
 
     # init networks and corresponding optimizers
     print('Initialize the networks..')
@@ -132,20 +130,32 @@ def main():
 
     # initial training 
     print('Start initial training..')
+    train_dl = create_dl(train_data['o'], train_data['o'], args.batch_size)
+    val_dl = create_dl(val_data['o'], val_data['a'], args.batch_size)
+
     trainer.train_iteratively(args.initial_epochs, train_dl, val_dl)
+
+    # log and update
+    trainer.store_augmentations(val_dl, os.path.join(val_path, str(0)))
 
     # Save final generator model
     save_model(trainer.g, model_path, prefix='before_tune')
 
-    # Fine tuning iterations
+    print('Start fine-tuning..')
     if args.sweep:
         trainer.gp_weight = args.gp_weight
-    print('Start fine-tuning..')
+
+    # Fine tuning iterations
     for i in range(args.max_iterations):
-        # create new data
         new_ep_data = create_data(args.trajectories)
-        new_train_data = sample_data(train_data, new_ep_data, args.data_ratio)
-        
+
+        if args.iteration_type == 'fine_tune':
+            new_train_data = sample_data(train_data, new_ep_data, args.data_ratio)
+            train_dl = create_dl(new_train_data['o'], new_train_data['a'], args.batch_size)
+        else:
+            train_data = update_data(train_data, new_ep_data)
+            train_dl = create_dl(train_data['o'], train_data['o'], args.batch_size)
+            
         trainer.train_iteratively(
             args.epochs_per_iteration,
             create_dl(new_train_data['o'], new_train_data['a'], args.batch_size),
@@ -154,12 +164,15 @@ def main():
         )
 
         # log and update
-        trainer.store_augmentations(val_dl, os.path.join(val_path, str(i)))
-        update_data(train_data, new_ep_data)
+        trainer.store_augmentations(val_dl, os.path.join(val_path, str(i+1)))
+
+        # update the replay buffer for fine tuning iteration type
+        if args.iteration_type == 'fine_tune':
+            train_data = update_data(train_data, new_ep_data)
 
     # final call to visualize the generations of the epochs
-    print('Saving validation images on WandB..')
-    trainer.logger.log_generation()
+    print('Saving evaluation images on WandB..')
+    trainer.logger.upload_eval_imgs()
 
     # Save final generator model
     print('Saving models..')
@@ -167,7 +180,7 @@ def main():
 
 if __name__ == '__main__':
     if args.sweep:
-        sweep_config = sweep_config
+        sweep_config = get_sweep_config(args.sweep_config)
         sweep_id = wandb.sweep(sweep=sweep_config, project=args.wandb_project_name)
         wandb.agent(sweep_id, function=main)
     else:
