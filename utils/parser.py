@@ -68,8 +68,8 @@ def get_dagan_args():
     parser.add_argument("-t", "--trajectories", default=1, type=int, help="number of trajectories to collect per iteration")
     parser.add_argument("--data_ratio", default=1.0, type=float, help="ratio between new and old data with range [0,1]\n1 -> only new 0 -> only old")
     
-    parser.add_argument("-d", "--detach", nargs="+", help="networks to freeze", default=[], choices=['gen', 'disc', 'noise'])
-    parser.add_argument("-l", "--layer_sizes", nargs="+", help="layers to detach", default=[], type=int)
+    parser.add_argument("-n", "--networks_to_detach", nargs="+", help="networks to detach", default=[], choices=['gen', 'disc', 'noise'])
+    parser.add_argument("-l", "--layer_sizes_to_detach", nargs="+", help="layers to detach", default=[], type=int)
 
     return parser.parse_args()
 
@@ -77,11 +77,11 @@ def prepare_args(args):
     """
     Sanity checks and processing for arguments
     """
-    if len(args.detach) != len(args.layer_sizes):
+    if len(args.networks_to_detach) != len(args.layer_sizes_to_detach):
         raise ValueError('Detach and amount of layers to detach should correspond to each other')
 
     # set the layers to detach for networks
-    args.detach = {d: args.layer_sizes[i] for i, d in enumerate(args.detach)}
+    args.detach = {d: args.layer_sizes_to_detach[i] for i, d in enumerate(args.networks_to_detach)}
 
     for network, size in args.detach.items():
         if network == 'gen' and size > 4:
