@@ -131,17 +131,17 @@ class DaganTrainer:
         # at the end log the generations in table to wandb (hotfix for wandb bug)
         self.visualizer.log_generation()
 
-    def sample_val_images(self, val_dataloader):
+    def sample_img(self, val_dl):
         """
         images have the shape (CxHxW) and have the range [0, 255]
         """
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
 
-            idx = torch.randint(0, len(val_dataloader.dataset), (1,))
+            idx = torch.randint(0, len(val_dl.dataset), (1,))
             return {
-                'original': val_dataloader.dataset.originals[idx],
-                'augmentation': val_dataloader.dataset.augmentations[idx]
+                'original': val_dl.dataset.originals[idx],
+                'augmentation': val_dl.dataset.augmentations[idx]
             }
 
     def log_losses(self):
@@ -152,8 +152,8 @@ class DaganTrainer:
         """
         Logs the images (original, real augmentation, augmentation of generator) to the visualizer
         """
-        val_imgs = self.sample_val_images(val_dl)
-        real_val_img = ((val_imgs['original'] / 255) - 0.5) / 0.5
+        img = self.sample_img(val_dl)
+        real_val_img = ((img['original'] / 255) - 0.5) / 0.5
 
         # set generator to eval mode
         self.g.eval()
@@ -164,8 +164,8 @@ class DaganTrainer:
 
         self.visualizer.add_imgs_to_table(
             self.epoch,
-            val_imgs['original'],
-            val_imgs['augmentation'],
+            img['original'],
+            img['augmentation'],
             gen_img,
         )
 
