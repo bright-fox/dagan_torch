@@ -6,7 +6,7 @@ from dagan_trainer import DaganTrainer
 from dagan_torch.discriminator import Discriminator
 from dagan_torch.generator import Generator
 from dagan_torch.dataset import create_dl
-from utils.parser import get_dagan_args
+from utils.parser import get_dagan_args, prepare_args
 from utils.utils import load_data, sample_data, save_model, update_data
 from utils.visualizer import Visualizer
 from utils.sweep_config import sweep_config
@@ -80,6 +80,8 @@ def create_data(num_of_episodes):
     }
     
 def main():
+    args = prepare_args(args)
+    
     # init wandb and visualizer
     vis = Visualizer(args, wandb_project=args.wandb_project_name)
 
@@ -98,21 +100,6 @@ def main():
         print('Models are saved at', model_path)
 
     else:
-        # sanity check the args
-        if len(args.detach) != len(args.layer_sizes):
-            raise ValueError('Detach and amount of layers to detach should correspond to each other')
-
-        # set the layers to detach for networks
-        args.detach = {d: args.layer_sizes[i] for i, d in enumerate(args.detach)}
-
-        for network, size in args.detach.items():
-            if network == 'gen' and size > 4:
-                raise ValueError('Encoder of generator only has 4 layers to freeze')
-            if network == 'disc' and size > 4:
-                raise ValueError('Discriminator only has 4 layers to freeze')
-            if network == 'noise' and size > 3:
-                raise ValueError('Noise encoder only has 3 layers to freeze')
-
         # create model path
         model_path = os.path.join(args.model_path, args.name)
 

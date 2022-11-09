@@ -72,3 +72,22 @@ def get_dagan_args():
     parser.add_argument("-l", "--layer_sizes", nargs="+", help="layers to detach", default=[], type=int)
 
     return parser.parse_args()
+
+def prepare_args(args):
+    """
+    Sanity checks and processing for arguments
+    """
+    if len(args.detach) != len(args.layer_sizes):
+        raise ValueError('Detach and amount of layers to detach should correspond to each other')
+
+    # set the layers to detach for networks
+    args.detach = {d: args.layer_sizes[i] for i, d in enumerate(args.detach)}
+
+    for network, size in args.detach.items():
+        if network == 'gen' and size > 4:
+            raise ValueError('Encoder of generator only has 4 layers to freeze')
+        if network == 'disc' and size > 4:
+            raise ValueError('Discriminator only has 4 layers to freeze')
+        if network == 'noise' and size > 3:
+            raise ValueError('Noise encoder only has 3 layers to freeze')
+    return args
