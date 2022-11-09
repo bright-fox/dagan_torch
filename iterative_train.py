@@ -22,11 +22,14 @@ np.random.seed(0)
 
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
+
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+vary = [v for v in dmcr.DMCR_VARY if v != "camera"]
 
 # Load input args
 args = get_dagan_args()
-vary = [v for v in dmcr.DMCR_VARY if v != "camera"]
+args = prepare_args(args)
+
 wandb.login()
 
 def create_data(num_of_episodes):
@@ -79,9 +82,7 @@ def create_data(num_of_episodes):
         'a': np.array(augmentations),
     }
     
-def main():
-    args = prepare_args(args)
-    
+def main():    
     # init wandb and visualizer
     logger = Logger(args, wandb_project=args.wandb_project_name)
 
