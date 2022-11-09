@@ -7,6 +7,7 @@ from dagan_torch.discriminator import Discriminator
 from dagan_torch.generator import Generator
 from dagan_torch.dataset import create_dl
 from utils.parser import get_dagan_args
+from utils.utils import load_data, sample_data, save_model, update_data
 from utils.visualizer import Visualizer
 from utils.sweep_config import sweep_config
 import torch
@@ -28,9 +29,9 @@ args = get_dagan_args()
 vary = [v for v in dmcr.DMCR_VARY if v != "camera"]
 wandb.login()
 
-def create_data(batch_size, max_train_size=None):
+def create_data(num_of_episodes):
     """
-    Creates data loader for one episode of a random environment
+    Returns originals and augmentations from one episode
     """
     originals = []
     augmentations = []
@@ -58,40 +59,29 @@ def create_data(batch_size, max_train_size=None):
         frame_stack=1
     )
 
-    env.reset()
-    noisy_env.reset()
-    done = False
+    for i in range(num_of_episodes):
+        env.reset()
+        noisy_env.reset()
+        done = False
 
-    while not done:
-        action = env.action_space.sample()
+        while not done:
+            action = env.action_space.sample()
 
-        # action repeated 20 times
-        for _ in range(20):
-            next_obs, _, done, _ = env.step(action)
-            next_noisy_obs, _, _, _ = noisy_env.step(action)
-            originals.append(next_obs)
-            augmentations.append(next_noisy_obs)
+            # action repeated 20 times
+            for _ in range(20):
+                next_obs, _, done, _ = env.step(action)
+                next_noisy_obs, _, _, _ = noisy_env.step(action)
+                originals.append(next_obs)
+                augmentations.append(next_noisy_obs)
 
-    o = np.array(originals)
-    a = np.array(augmentations)
-    num_val_data = 10
-
-    # shuffle and create train and val dl
-    indices = np.arange(o.shape[0])
-    np.random.shuffle(indices)
-
-    # take the specified train dataset size or the maximum that is possible
-    if max_train_size is None or max_train_size >= o.shape[0] - num_val_data:
-        max_train_size = o.shape[0] - num_val_data
-
-    train_dl = create_dl(o[indices[:max_train_size]], a[indices[:max_train_size]], batch_size)
-    val_dl = create_dl(o[indices[max_train_size:max_train_size+num_val_data]], a[indices[max_train_size:max_train_size+num_val_data]], batch_size)
-
-    return train_dl, val_dl
-
+    return {
+        'o': np.array(originals),
+        'a': np.array(augmentations),
+    }
+    
 def main():
     # init wandb and visualizer
-    vis = Visualizer(args, wandb_project='Iterative_Dagan')
+    vis = Visualizer(args, wandb_project=args.wandb_project_name)
 
     # if sweep then load sweep config into args
     if args.sweep:
@@ -134,14 +124,13 @@ def main():
 
     # load the data
     print('Loading the initial..')
-    initial_train_data = np.load(f'{args.dataset_path}/train.npz')
-    initial_val_data = np.load(f'{args.dataset_path}/val.npz')
-    train_dl = create_dl(initial_train_data['orig'], initial_train_data['aug'], args.batch_size)
-    val_dl = create_dl(initial_val_data['orig'], initial_val_data['aug'], args.batch_size)
+    train_data, val_data = load_data(args.dataset.path)
+    train_dl = create_dl(train_data['o'], train_data['o'], args.batch_size)
+    val_dl = create_dl(val_data['o'], val_data['a'], args.batch_size)
 
     # get img info
-    in_channels = initial_train_data['orig'].shape[1]
-    img_size = args.img_size or initial_train_data['orig'].shape[2]
+    in_channels = train_data['o'].shape[1]
+    img_size = args.img_size or train_data['o'].shape[2]
 
     # init networks and corresponding optimizers
     print('Initialize the networks..')
@@ -167,8 +156,7 @@ def main():
     trainer.train_iteratively(args.initial_epochs, train_dl, val_dl)
 
     # Save final generator model
-    torch.save(trainer.g, os.path.join(model_path, 'model_before_tune.pt'))
-    torch.save(trainer.g.state_dict(), os.path.join(model_path, 'state_dict_before_tune.pt'))
+    save_model(trainer.g, model_path, prefix='before_tune')
 
     # Fine tuning iterations
     if args.sweep:
@@ -176,9 +164,20 @@ def main():
     print('Start fine-tuning..')
     print('[DEBUG]: gp_weight:', trainer.gp_weight)
     for i in range(args.max_iterations):
-        train_dl, val_dl = create_data(args.batch_size, args.data_per_iteration)
-        trainer.train_iteratively(args.epochs_per_iteration, train_dl, val_dl, args.detach)
+        # create new data
+        new_ep_data = create_data(args.trajectories)
+        new_train_data = sample_data(train_data, new_ep_data, args.data_ratio)
+        
+        trainer.train_iteratively(
+            args.epochs_per_iteration,
+            create_dl(new_train_data['o'], new_train_data['a'], args.batch_size),
+            val_dl,
+            args.detach,
+        )
+
+        # log and update
         trainer.store_augmentations(val_dl, os.path.join(val_path, str(i)))
+        update_data(train_data, new_ep_data)
 
     # final call to visualize the generations of the epochs
     print('Saving validation images on WandB..')
@@ -186,13 +185,12 @@ def main():
 
     # Save final generator model
     print('Saving models..')
-    torch.save(trainer.g, os.path.join(model_path, 'model.pt'))
-    torch.save(trainer.g.state_dict(), os.path.join(model_path, 'state_dict.pt'))
+    save_model(trainer.g, model_path)
 
 if __name__ == '__main__':
     if args.sweep:
         sweep_config = sweep_config
-        sweep_id = wandb.sweep(sweep=sweep_config, project='Iterative_DAGAN_sweep')
+        sweep_id = wandb.sweep(sweep=sweep_config, project=args.wandb_project_name)
         wandb.agent(sweep_id, function=main)
     else:
         main()
