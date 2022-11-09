@@ -129,11 +129,12 @@ def main():
     )
 
     # initial training 
-    print('Start initial training..')
+    print('Start initial training..\n')
+    print('[INFO] Iteration 0')
     train_dl = create_dl(train_data['o'], train_data['a'], args.batch_size)
     val_dl = create_dl(val_data['o'], val_data['a'], args.batch_size)
-    print(f'[DEBUG] Train Dataset Size: {len(train_dl.dataset)}')
-    print(f'[DEBUG] Val Dataset Size: {len(val_dl.dataset)}')
+    print(f'\t[DEBUG] Train Dataset Size: {len(train_dl.dataset)}')
+    print(f'\t[DEBUG] Val Dataset Size: {len(val_dl.dataset)}')
 
     trainer.train_iteratively(args.initial_epochs, train_dl, val_dl)
 
@@ -149,6 +150,7 @@ def main():
 
     # Fine tuning iterations
     for i in range(args.max_iterations):
+        print(f'[INFO] Iteration {i+1}')
         new_ep_data = create_data(args.trajectories)
 
         if args.iteration_type == 'fine_tune':
@@ -158,8 +160,8 @@ def main():
             train_data = update_data(train_data, new_ep_data)
             train_dl = create_dl(train_data['o'], train_data['a'], args.batch_size)
             
-        print(f'[DEBUG] Train Dataset Size: {len(train_dl.dataset)}')
-        print(f'[DEBUG] Val Dataset Size: {len(val_dl.dataset)}')
+        print(f'\t[DEBUG] Train Dataset Size: {len(train_dl.dataset)}')
+        print(f'\t[DEBUG] Val Dataset Size: {len(val_dl.dataset)}')
 
         trainer.train_iteratively(args.epochs_per_iteration, train_dl, val_dl, args.detach)
 
