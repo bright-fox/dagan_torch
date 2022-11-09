@@ -192,11 +192,11 @@ class DaganTrainer:
         start_time = int(time.time())
 
         for e in range(epochs):
-            print(f'\n[INFO] Epoch {self.epoch}')
+            print(f'\n\t[INFO] Epoch {self.epoch}')
             self._train_epoch(dl, detach)
             self.epoch += 1
 
         # print elapsed time
-        print(f"Elapsed time for current iteration: {(time.time() - start_time) / 60:.2f} minutes\n")
+        print(f"[INFO] Elapsed time for current iteration: {(time.time() - start_time) / 60:.2f} minutes\n")
         # log current progress
         self.log_augmentations(val_dl)
