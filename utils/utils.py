@@ -53,6 +53,8 @@ def sample_data(old, new, ratio):
     old_indices = np.random.choice(np.arange(old['o'].shape[0]), num_of_old, replace=False)
     new_indices = np.random.choice(np.arange(new['o'].shape[0]), num_of_new, replace=False)
 
+    print(f'[DEBUG]: {len(old_indices)}/{len(new_indices)} (old/new)')
+
     return {
         'o': np.concatenate((old['o'][old_indices], new['o'][new_indices]), axis=0),
         'a': np.concatenate((old['a'][old_indices], new['a'][new_indices]), axis=0),

@@ -99,7 +99,7 @@ def main():
 
     # load the data
     print('Loading the initial data..')
-    train_data, val_data = load_data(args.dataset.path)
+    train_data, val_data = load_data(args.dataset_path)
 
     # init networks and corresponding optimizers
     print('Initialize the networks..')
@@ -130,8 +130,10 @@ def main():
 
     # initial training 
     print('Start initial training..')
-    train_dl = create_dl(train_data['o'], train_data['o'], args.batch_size)
+    train_dl = create_dl(train_data['o'], train_data['a'], args.batch_size)
     val_dl = create_dl(val_data['o'], val_data['a'], args.batch_size)
+    print(f'[DEBUG] Train Dataset Size: {len(train_dl.dataset)}')
+    print(f'[DEBUG] Val Dataset Size: {len(val_dl.dataset)}')
 
     trainer.train_iteratively(args.initial_epochs, train_dl, val_dl)
 
@@ -154,14 +156,12 @@ def main():
             train_dl = create_dl(new_train_data['o'], new_train_data['a'], args.batch_size)
         else:
             train_data = update_data(train_data, new_ep_data)
-            train_dl = create_dl(train_data['o'], train_data['o'], args.batch_size)
+            train_dl = create_dl(train_data['o'], train_data['a'], args.batch_size)
             
-        trainer.train_iteratively(
-            args.epochs_per_iteration,
-            create_dl(new_train_data['o'], new_train_data['a'], args.batch_size),
-            val_dl,
-            args.detach,
-        )
+        print(f'[DEBUG] Train Dataset Size: {len(train_dl.dataset)}')
+        print(f'[DEBUG] Val Dataset Size: {len(val_dl.dataset)}')
+
+        trainer.train_iteratively(args.epochs_per_iteration, train_dl, val_dl, args.detach)
 
         # log and update
         trainer.store_augmentations(val_dl, os.path.join(val_path, str(i+1)))

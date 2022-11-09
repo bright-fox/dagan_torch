@@ -56,11 +56,12 @@ def get_dagan_args():
         default="dagan",
         help="Name of the model, as well as the wandb run"
     )
+    parser.add_argument('--gp_weight', default=10, type=int, help='weight for gradient penalty')
 
     # wandb
     parser.add_argument("--wandb_project_name", default="DAGAN", help="Name for WandB project")
     parser.add_argument('-s', '--sweep', action='store_true', help='do wandb sweep')
-    parser.add_argument('--sweep_config', default='replay_buffer', help='sweep config name', choices=['gp', 'replay_buffer'])
+    parser.add_argument('-c', '--sweep_config', default='replay_buffer', help='sweep config name', choices=['gp', 'replay_buffer'])
 
     # these arguments are only used for the iterative approach
     parser.add_argument("--initial_epochs", default=20, type=int)
