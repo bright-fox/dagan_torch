@@ -7,7 +7,7 @@ from dagan_torch.discriminator import Discriminator
 from dagan_torch.generator import Generator
 from dagan_torch.dataset import create_dl
 from utils.parser import get_dagan_args, prepare_args
-from utils.utils import load_data, sample_data, save_model, update_data
+from utils.utils import create_output_dirs, load_data, sample_data, save_model, update_data
 from utils.logger import Logger
 from utils.sweep_config import sweep_config
 import torch
@@ -94,20 +94,7 @@ def main():
         for key in config.keys():
             setattr(args, key, config[key])
 
-        # each sweep run will get its own uniquie identifier
-        id = uuid.uuid4()
-        model_path = os.path.join(args.model_path, args.name, id.hex)
-        print('Models are saved at', model_path)
-
-    else:
-        # create model path
-        model_path = os.path.join(args.model_path, args.name)
-
-    # create model dir
-    print('Creating output folders..')
-    pathlib.Path(model_path).mkdir(parents=True, exist_ok=True)
-    val_path = os.path.join(model_path, 'out')
-    pathlib.Path(val_path).mkdir(parents=True, exist_ok=True)
+    model_path, val_path = create_output_dirs(args.model_path, args.name, args.sweep)
 
     # load the data
     print('Loading the initial..')
@@ -115,14 +102,19 @@ def main():
     train_dl = create_dl(train_data['o'], train_data['o'], args.batch_size)
     val_dl = create_dl(val_data['o'], val_data['a'], args.batch_size)
 
-    # get img info
-    in_channels = train_data['o'].shape[1]
-    img_size = args.img_size or train_data['o'].shape[2]
-
     # init networks and corresponding optimizers
     print('Initialize the networks..')
-    g = Generator(dim=img_size, channels=in_channels, dropout_rate=args.dropout_rate, device=device)
-    d = Discriminator(dim=img_size, channels=in_channels * 2, dropout_rate=args.dropout_rate)
+    g = Generator(
+        dim=args.img_size or train_data['o'].shape[2],
+        channels=train_data['o'].shape[1],
+        dropout_rate=args.dropout_rate,
+        device=device
+    )
+    d = Discriminator(
+        dim=args.img_size or train_data['o'].shape[2],
+        channels=train_data['o'].shape[1] * 2,
+        dropout_rate=args.dropout_rate
+    )
     g_opt = optim.Adam(g.parameters(), lr=0.0001, betas=(0.0, 0.9))
     d_opt = optim.Adam(d.parameters(), lr=0.0001, betas=(0.0, 0.9))
 
@@ -139,7 +131,6 @@ def main():
 
     # initial training 
     print('Start initial training..')
-    print('[DEBUG]: gp_weight:', trainer.gp_weight)
     trainer.train_iteratively(args.initial_epochs, train_dl, val_dl)
 
     # Save final generator model
@@ -149,7 +140,6 @@ def main():
     if args.sweep:
         trainer.gp_weight = args.gp_weight
     print('Start fine-tuning..')
-    print('[DEBUG]: gp_weight:', trainer.gp_weight)
     for i in range(args.max_iterations):
         # create new data
         new_ep_data = create_data(args.trajectories)

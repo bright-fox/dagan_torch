@@ -1,7 +1,25 @@
 import math
 import os
+import pathlib
+import uuid
 import numpy as np
 import torch
+
+def create_output_dirs(path, name, is_sweep):
+    # determine model path
+    if is_sweep:
+        # each sweep run will get its own unique identifier
+        id = uuid.uuid4()
+        model_path = os.path.join(path, name, id.hex)
+    else:
+        model_path = os.path.join(path, name)
+
+    print(f'Creating output folders at {model_path}')
+    pathlib.Path(model_path).mkdir(parents=True, exist_ok=True)
+    val_path = os.path.join(model_path, 'out')
+    pathlib.Path(val_path).mkdir(parents=True, exist_ok=True)
+
+    return model_path, val_path
 
 
 def load_data(path):
