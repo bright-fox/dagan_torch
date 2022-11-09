@@ -52,7 +52,7 @@ trainer = DaganTrainer(
     discriminator=d,
     gen_optimizer=g_opt,
     dis_optimizer=d_opt,
-    visualizer=visualizer,
+    logger=visualizer,
     device=device,
     critic_iterations=5,
 )

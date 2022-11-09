@@ -83,7 +83,7 @@ def main():
     args = prepare_args(args)
     
     # init wandb and visualizer
-    vis = Logger(args, wandb_project=args.wandb_project_name)
+    logger = Logger(args, wandb_project=args.wandb_project_name)
 
     # if sweep then load sweep config into args
     if args.sweep:
@@ -132,7 +132,7 @@ def main():
         discriminator=d,
         gen_optimizer=g_opt,
         dis_optimizer=d_opt,
-        visualizer=vis,
+        logger=logger,
         device=device,
         critic_iterations=5,
     )
@@ -168,7 +168,7 @@ def main():
 
     # final call to visualize the generations of the epochs
     print('Saving validation images on WandB..')
-    trainer.visualizer.log_generation()
+    trainer.logger.log_generation()
 
     # Save final generator model
     print('Saving models..')

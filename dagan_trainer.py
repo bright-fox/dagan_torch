@@ -12,7 +12,7 @@ class DaganTrainer:
         discriminator,
         gen_optimizer,
         dis_optimizer,
-        visualizer,
+        logger,
         device="cpu",
         gp_weight=10,
         critic_iterations=5,
@@ -27,7 +27,7 @@ class DaganTrainer:
         self.epoch = 0
         self.gp_weight = gp_weight
         self.critic_iterations = critic_iterations
-        self.visualizer = visualizer
+        self.logger = logger
 
     def _critic_train_iteration(self, x1, x2, detach):
         """
@@ -129,7 +129,7 @@ class DaganTrainer:
             # self._save_checkpoint()
 
         # at the end log the generations in table to wandb (hotfix for wandb bug)
-        self.visualizer.log_generation()
+        self.logger.upload_eval_imgs()
 
     def sample_img(self, val_dl):
         """
@@ -146,11 +146,11 @@ class DaganTrainer:
 
     def log_losses(self):
         if self.num_steps % 100 == 0:
-            self.visualizer.log_losses(self.losses)
+            self.logger.log_losses(self.losses)
 
     def log_augmentations(self, val_dl):
         """
-        Logs the images (original, real augmentation, augmentation of generator) to the visualizer
+        Logs the images (original, real augmentation, augmentation of generator)
         """
         img = self.sample_img(val_dl)
         real_val_img = ((img['original'] / 255) - 0.5) / 0.5
@@ -162,7 +162,7 @@ class DaganTrainer:
         # set generator back to training mode
         self.g.train()
 
-        self.visualizer.add_imgs_to_table(
+        self.logger.log_eval_imgs(
             self.epoch,
             img['original'],
             img['augmentation'],

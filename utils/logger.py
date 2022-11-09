@@ -11,15 +11,12 @@ class Logger():
     def __init__(self, args, wandb_project='DAGAN'):
         self.args = args
         self.current_epoch = 0
-        if args.sweep:
-            self.wandb_run = wandb.init(project=wandb_project)
-        else:
-            self.wandb_run = wandb.init(project=wandb_project, name=args.name, config=args)
-        self.val_images_table = wandb.Table(columns=['Epoch', 'Original', 'Real Augmentation', 'Generated Augmentation'])
+        self.wandb_run = wandb.init(project=wandb_project) if args.sweep else wandb.init(project=wandb_project, name=args.name, config=args)
+        self.eval_imgs_table = wandb.Table(columns=['Epoch', 'Original', 'Real Augmentation', 'Generated Augmentation'])
 
-    def add_imgs_to_table(self, epoch, original, real_aug, gen_aug):
+    def log_eval_imgs(self, epoch, original, real_aug, gen_aug):
         """
-        Add the original image, real augmentation and generated augmentation into a wandb table
+        Log the original image, real augmentation and generated augmentation into a wandb table
         """
         # transform the original and real augmentation image of
         # shape (channel, height, width) to be digested by wandb.Image
@@ -31,13 +28,13 @@ class Logger():
         g = (gen_aug * 0.5 + 0.5) * 255
         g = np.squeeze(g.detach().cpu().numpy()).transpose(1,2,0)
         
-        self.val_images_table.add_data(epoch, wandb.Image(o), wandb.Image(aug), wandb.Image(g))
+        self.eval_imgs_table.add_data(epoch, wandb.Image(o), wandb.Image(aug), wandb.Image(g))
 
-    def log_generation(self):
+    def upload_eval_imgs(self):
         """
         Log the images to wandb
         """
-        self.wandb_run.log({'Generations': self.val_images_table})
+        self.wandb_run.log({'Generations': self.eval_imgs_table})
 
     def log_losses(self, losses):
         # log losses to wandb
