@@ -169,13 +169,14 @@ class DaganTrainer:
             gen_img,
         )
 
-    def store_augmentations(self, val_dl, path):
+    def store_augmentations(self, val_dl, path, size=10):
         """
         Stores the augmentations in the specified path
         """
         self.g.eval()
 
-        originals = val_dl.dataset.originals[:]
+        max_size = max(size, len(val_dl.dataset))
+        originals = val_dl.dataset.originals[:max_size]
         imgs = ((originals / 255) - 0.5) / 0.5
 
         with torch.no_grad():
