@@ -7,7 +7,7 @@ import torch
 import os
 import torch.optim as optim
 import numpy as np
-from utils.visualizer import Visualizer
+from utils.logger import Logger
 
 # To maintain reproducibility
 torch.manual_seed(0)
@@ -28,7 +28,7 @@ if not os.access(final_generator_dir, os.W_OK):
     raise ValueError(final_generator_path + " is not a valid filepath.")
 
 # init wandb
-visualizer = Visualizer(args)
+visualizer = Logger(args)
 
 # load the data
 train_data = np.load(f'{args.dataset_path}/train.npz')

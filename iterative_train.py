@@ -8,7 +8,7 @@ from dagan_torch.generator import Generator
 from dagan_torch.dataset import create_dl
 from utils.parser import get_dagan_args, prepare_args
 from utils.utils import load_data, sample_data, save_model, update_data
-from utils.visualizer import Visualizer
+from utils.logger import Logger
 from utils.sweep_config import sweep_config
 import torch
 import os
@@ -83,7 +83,7 @@ def main():
     args = prepare_args(args)
     
     # init wandb and visualizer
-    vis = Visualizer(args, wandb_project=args.wandb_project_name)
+    vis = Logger(args, wandb_project=args.wandb_project_name)
 
     # if sweep then load sweep config into args
     if args.sweep:

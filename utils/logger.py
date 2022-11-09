@@ -1,11 +1,11 @@
 import wandb
 import numpy as np
 
-class Visualizer():
+class Logger():
     """
-    Visualizer is used to log information about the training.
-    - losses are logged in console and wandb
-    - evaluation images are logged in wandb
+    Logger is used to log information about the training.
+    - losses
+    - evaluation on noisy environments
     """
 
     def __init__(self, args, wandb_project='DAGAN'):
