@@ -175,8 +175,8 @@ class DaganTrainer:
         """
         self.g.eval()
 
-        max_size = max(size, len(val_dl.dataset))
-        originals = val_dl.dataset.originals[:max_size]
+        min_size = min(size, len(val_dl.dataset))
+        originals = val_dl.dataset.originals[:min_size]
         imgs = ((originals / 255) - 0.5) / 0.5
 
         with torch.no_grad():

@@ -62,7 +62,7 @@ def create_data(num_of_episodes):
         frame_stack=1
     )
 
-    for i in range(num_of_episodes):
+    for i in range(num_of_episodes + 1):
         env.reset()
         noisy_env.reset()
         done = False
@@ -76,11 +76,16 @@ def create_data(num_of_episodes):
                 next_noisy_obs, _, _, _ = noisy_env.step(action)
                 originals.append(next_obs)
                 augmentations.append(next_noisy_obs)
-
-    return {
-        'o': np.array(originals),
-        'a': np.array(augmentations),
+    train_data = {
+        'o': np.array(originals[:-1000]),
+        'a': np.array(augmentations[:-1000]),
     }
+    val_data = {
+        'o': np.array(originals[-1000:]),
+        'a': np.array(augmentations[-1000:]),
+    }
+
+    return train_data, val_data
     
 def main():    
     # init wandb and visualizer
@@ -126,6 +131,7 @@ def main():
         logger=logger,
         device=device,
         critic_iterations=5,
+        gp_weight=args.gp_weight,
     )
 
     # initial training 
@@ -151,13 +157,14 @@ def main():
     # Fine tuning iterations
     for i in range(args.max_iterations):
         print(f'[INFO] Iteration {i+1}')
-        new_ep_data = create_data(args.trajectories)
+        new_eps_train, new_ep_val = create_data(args.trajectories)
+        val_dl = create_dl(new_ep_val['o'], new_ep_val['a'], args.batch_size)
 
         if args.iteration_type == 'fine_tune':
-            new_train_data = sample_data(train_data, new_ep_data, args.data_ratio)
+            new_train_data = sample_data(train_data, new_eps_train, args.data_ratio)
             train_dl = create_dl(new_train_data['o'], new_train_data['a'], args.batch_size)
         else:
-            train_data = update_data(train_data, new_ep_data)
+            train_data = update_data(train_data, new_eps_train)
             train_dl = create_dl(train_data['o'], train_data['a'], args.batch_size)
             
         print(f'\t[DEBUG] Train Dataset Size: {len(train_dl.dataset)}')
@@ -170,7 +177,7 @@ def main():
 
         # update the replay buffer for fine tuning iteration type
         if args.iteration_type == 'fine_tune':
-            train_data = update_data(train_data, new_ep_data)
+            train_data = update_data(train_data, new_eps_train)
 
     # final call to visualize the generations of the epochs
     print('Saving evaluation images on WandB..')
