@@ -69,6 +69,7 @@ def get_dagan_args():
     parser.add_argument("--epochs_per_iteration", default=1, type=int)
     parser.add_argument("-t", "--trajectories", default=1, type=int, help="number of trajectories to collect per iteration")
     parser.add_argument("--data_ratio", default=1.0, type=float, help="ratio between new and old data with range [0,1]\n1 -> only new 0 -> only old")
+    parser.add_argument("--limit_train_data", action='store_true', help='Limits the data to train to the max of the initial dataset')
     
     parser.add_argument("--networks_to_detach", nargs="+", help="networks to detach", default=[], choices=['gen', 'disc', 'noise'])
     parser.add_argument("--layer_sizes_to_detach", nargs="+", help="layers to detach", default=[], type=int)

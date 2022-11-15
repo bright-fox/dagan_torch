@@ -164,7 +164,7 @@ def main():
             new_train_data = sample_data(train_data, new_eps_train, args.data_ratio)
             train_dl = create_dl(new_train_data['o'], new_train_data['a'], args.batch_size)
         else:
-            train_data = update_data(train_data, new_eps_train)
+            train_data = update_data(train_data, new_eps_train, args.limit_train_data)
             train_dl = create_dl(train_data['o'], train_data['a'], args.batch_size)
             
         print(f'\t[DEBUG] Train Dataset Size: {len(train_dl.dataset)}')
@@ -177,7 +177,7 @@ def main():
 
         # update the replay buffer for fine tuning iteration type
         if args.iteration_type == 'fine_tune':
-            train_data = update_data(train_data, new_eps_train)
+            train_data = update_data(train_data, new_eps_train, args.limit_train_data)
 
     # final call to visualize the generations of the epochs
     print('Saving evaluation images on WandB..')

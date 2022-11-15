@@ -60,14 +60,21 @@ def sample_data(old, new, ratio):
         'a': np.concatenate((old['a'][old_indices], new['a'][new_indices]), axis=0),
     }
 
-def update_data(old, new):
+def update_data(old, new, limit_data=False):
     """
     Update the dataset with the new data
     """
 
+    originals = np.concatenate((old['o'], new['o']), axis=0)
+    augs = np.concatenate((old['a'], new['a']), axis=0)
+
+    if limit_data:
+        originals = originals[-old.shape[0]:]
+        augs = augs[-old.shape[0]:]
+
     return {
-        'o': np.concatenate((old['o'], new['o']), axis=0),
-        'a': np.concatenate((old['a'], new['a']), axis=0),
+        'o': originals,
+        'a': augs,
     }
 
 def save_model(model, dir_path, prefix=''):
