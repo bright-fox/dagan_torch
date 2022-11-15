@@ -169,14 +169,17 @@ class DaganTrainer:
             gen_img,
         )
 
-    def store_augmentations(self, val_dl, path, size=10):
+    def store_augmentations(self, val_dl, path, size=20):
         """
         Stores the augmentations in the specified path
         """
         self.g.eval()
 
+        # get random validation images
         min_size = min(size, len(val_dl.dataset))
-        originals = val_dl.dataset.originals[:min_size]
+        indices = np.random.choice(np.arange(len(val_dl.dataset)), min_size, replace=False)
+
+        originals = val_dl.dataset.originals[indices]
         imgs = ((originals / 255) - 0.5) / 0.5
 
         with torch.no_grad():
