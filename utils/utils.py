@@ -69,8 +69,8 @@ def update_data(old, new, limit_data=False):
     augs = np.concatenate((old['a'], new['a']), axis=0)
 
     if limit_data:
-        originals = originals[-old.shape[0]:]
-        augs = augs[-old.shape[0]:]
+        originals = originals[-old['o'].shape[0]:]
+        augs = augs[-old['o'].shape[0]:]
 
     return {
         'o': originals,
