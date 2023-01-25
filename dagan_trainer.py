@@ -123,7 +123,7 @@ class DaganTrainer:
             # log the generations
             self.log_augmentations(val_dataloader)
             # train the epoch
-            self._train_epoch(data_loader)
+            self._train_epoch(data_loader, detach={})
 
             self.epoch += 1
             # self._save_checkpoint()
