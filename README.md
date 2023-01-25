@@ -2,7 +2,7 @@
 
 This implementation is based on [amurthy1/dagan_torch](https://github.com/amurthy1/dagan_torch) which is a PyTorch implementation for the paper [Data Augmentation Generative Adversarial Networks](https://arxiv.org/abs/1711.04340).
 
-The architecture is changed in a way that we do not look at different classes but just have one class and therefore have an easier architecture to work with. It is basically the [Pix2Pix](https://arxiv.org/abs/1611.07004) architecture with noise injected at the level of the bottleneck of the UNet to increase diversity of the generated output.
+The architecture is changed to consider one class instead of multiple classes. This simplfies the overall architecture.
 
 <p align="center">
   <img src="resources/overview.png" width=640 height=360/>
