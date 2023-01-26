@@ -29,8 +29,8 @@ model_path, val_path = create_output_dirs(args.model_path, args.name, is_sweep=F
 logger = Logger(args)
 
 # load the data
-train_data = np.load(f'{args.dataset_path}/train.npz')
-val_data = np.load(f'{args.dataset_path}/val.npz')
+train_data = np.load(os.path.join(args.dataset_path, 'train.npz'))
+val_data = np.load(os.path.join(args.dataset_path, 'val.npz'))
 train_dl = create_dl(train_data['orig'], train_data['aug'], args.batch_size)
 val_dl = create_dl(val_data['orig'], val_data['aug'], args.batch_size)
 
