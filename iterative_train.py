@@ -42,8 +42,8 @@ def create_data(num_of_episodes):
     dynamics_seed = random.randint(1, 1_000_000)
     visual_seed = random.randint(1, 1_000_000)
     env = dmcr.wrapper.make(
-        'cheetah',
-        'run',
+        args.domain,
+        args.task,
         dynamics_seed=dynamics_seed,
         visual_seed=0,
         vary=vary,
@@ -52,8 +52,8 @@ def create_data(num_of_episodes):
         frame_stack=1
     )
     noisy_env = dmcr.wrapper.make(
-        'cheetah',
-        'run',
+        args.domain,
+        args.task,
         dynamics_seed=dynamics_seed,
         visual_seed=visual_seed,
         vary=vary,

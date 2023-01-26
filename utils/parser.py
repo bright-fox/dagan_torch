@@ -63,7 +63,9 @@ def get_dagan_args():
     parser.add_argument('-s', '--sweep', action='store_true', help='do wandb sweep')
     parser.add_argument('-c', '--sweep_config', default='replay_buffer', help='sweep config name', choices=['gp', 'replay_buffer'])
 
-    # these arguments are only used for the iterative approach
+    # These arguments are only used for the iterative approach
+    parser.add_argument("--domain", default='cheetah', type=str, help="domain of environment")
+    parser.add_argument("--task", default='run', type=str, help='task of environment')
     parser.add_argument("--initial_epochs", default=20, type=int)
     parser.add_argument("--max_iterations", default=10, type=int)
     parser.add_argument("--epochs_per_iteration", default=1, type=int)
