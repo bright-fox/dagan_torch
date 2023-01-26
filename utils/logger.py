@@ -11,7 +11,7 @@ class Logger():
     def __init__(self, args, wandb_project='DAGAN'):
         self.args = args
         self.current_epoch = 0
-        self.wandb_run = wandb.init(project=wandb_project) if args.sweep else wandb.init(project=wandb_project, name=args.name, config=args)
+        self.wandb_run = wandb.init(project=wandb_project) if args.sweep else wandb.init(project=wandb_project, config=args)
         self.eval_imgs_table = wandb.Table(columns=['Epoch', 'Original', 'Real Augmentation', 'Generated Augmentation'])
 
     def log_eval_imgs(self, epoch, original, real_aug, gen_aug):
