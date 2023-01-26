@@ -66,17 +66,17 @@ def get_dagan_args():
     # These arguments are only used for the iterative approach
     parser.add_argument("--domain", default='cheetah', type=str, help="domain of environment")
     parser.add_argument("--task", default='run', type=str, help='task of environment')
-    parser.add_argument("--initial_epochs", default=20, type=int)
-    parser.add_argument("--max_iterations", default=10, type=int)
-    parser.add_argument("--epochs_per_iteration", default=1, type=int)
-    parser.add_argument("-t", "--trajectories", default=1, type=int, help="number of trajectories to collect per iteration")
+    parser.add_argument("--initial_epochs", default=20, type=int, help="number of epochs for pre-training")
+    parser.add_argument("--max_iterations", default=10, type=int, help="max number of fine-tuning iterations")
+    parser.add_argument("--epochs_per_iteration", default=1, type=int, help="epochs per fine-tuning iteration")
+    parser.add_argument("-t", "--trajectories", default=1, type=int, help="number of trajectories to collect per fine-tuning iteration")
     parser.add_argument("--data_ratio", default=1.0, type=float, help="ratio between new and old data with range [0,1]\n1 -> only new 0 -> only old")
     parser.add_argument("--limit_train_data", action='store_true', help='Limits the data to train to the max of the initial dataset')
     
     parser.add_argument("--networks_to_detach", nargs="+", help="networks to detach", default=[], choices=['gen', 'disc', 'noise'])
     parser.add_argument("--layer_sizes_to_detach", nargs="+", help="layers to detach", default=[], type=int)
     # Choices: [fine_tune: use mostly small sample of new data | adjust: add new data to replay buffer and continue training]
-    parser.add_argument("--iteration_type", default="fine_tune", type=str, help="type of iterative training", choices=['adjust', 'fine_tune'])
+    parser.add_argument("--iteration_type", default="adjust", type=str, help="type of iterative training", choices=['adjust', 'fine_tune'])
 
     return parser.parse_args()
 
