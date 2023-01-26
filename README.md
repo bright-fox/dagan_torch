@@ -24,6 +24,7 @@ The names of the dataset used in the implementation are:
 1. Create virtual environment
   ```
   conda create -n my_env python=3.8
+  conda activate my_env
   ```
 2. Install the dependencies in `requirements.txt`
   ```
@@ -43,6 +44,7 @@ The names of the dataset used in the implementation are:
 1. Create virtual environment
   ```
   conda create -n my_env python=3.10
+  conda activate my_env
   ```
 2. Install the dependencies in `requirements.txt`
   ```
