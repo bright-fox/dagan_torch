@@ -54,7 +54,7 @@ The names of the dataset used in the implementation are:
   ```
 4. Install (dcm_remastered)[https://github.com/QData/dmc_remastered]
   ```
-  https://github.com/QData/dmc_remastered.git
+  git clone https://github.com/QData/dmc_remastered.git
   cd dmc_remastered
   pip install -e .
   ```
